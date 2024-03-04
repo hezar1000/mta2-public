@@ -1,0 +1,170 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+{% if 'course_id' in request.session %}
+
+{% load get_pending_reviews %}
+{% load has_review %}
+{% load get_ta_reviews %}
+{% load get_student_reviews %}
+{% load get_ta_evaluations %}
+{% load get_assignment_submissions%}
+
+<div class="container-fluid">
+  
+  <div class="row">
+    <div class="col-sm-6 col-md-offset-2 col-md-8">
+
+      <!-- <div class="page-header">
+        <h3>Reviews</h3>
+      </div> -->
+
+      <!-- <div class="panel panel-default">
+        <div class="panel-heading">
+          Manage rubrics
+        </div>
+        <div class="panel-body">
+          <a class="btn btn-link" href="{% url 'review:rubric_create' %}">Create a new rubric</a>  
+
+          <a class="btn btn-link" href="{% url 'review:rubric_question_list' %}">Show existing rubric questions</a>  
+          <a class="btn btn-link" href="{% url 'review:rubric_list' %}">Show existing rubrics</a>
+        </div>
+      </div> -->
+
+      {% if not is_student %}
+        <div class="btn-group mta-btn-group-title">
+          <a class="btn btn-success" href="{% url 'review:rubric_create' %}">
+            <span class="glyphicon glyphicon-plus"></span> Rubric
+          </a>  
+
+          <!-- <a class="btn btn-link" href="{% url 'review:rubric_question_list' %}">Show existing rubric questions</a>   -->
+          <a class="btn btn-default bg-grey" href="{% url 'review:rubric_list' %}">Existing rubrics</a>
+        </div>
+      {% endif %}
+
+
+      {% for assignment in assignments %} 
+
+        <div class="panel panel-default">
+
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <span class="col-md-2" style="float:none">{{ assignment.name }}</span>
+              <span>
+                <!-- <a data-toggle="collapse" href="#collapse{{ assignment.id }}">Show/Hide</a> -->
+              </span>
+            </h4>
+          </div>
+          
+          
+          {% if assignment.assignmentsubmission_set.all|length == 0 %}
+            <div class="panel-body panel-collapse collapse in" id="collapse{{ assignment.id }}">
+              No submission received.
+            </div>
+            {% else %}
+
+            <table class="table panel-body panel-collapse collapse in">
+              <!-- <thead>
+                <th></th>
+                <th></th>
+              </thead> -->
+              
+              
+              {% if not is_student %}
+                <tr>
+                  <td scope="row">
+                      <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>
+                      &nbsp;
+                      Stats
+                  </td>
+                  <td>
+                    
+                    <!-- <p> -->
+                    &nbsp;&nbsp;&nbsp;
+                    {{ assignment|get_assignment_submissions|length }} submission(s), 
+                    {{ assignment|get_ta_reviews|length }} TA review(s), 
+                    {{ assignment|get_student_reviews|length }}
+                    {% if assignment.course.enable_independent_pool %}
+                      + {{ assignment|get_student_calibration_reviews|length }}
+                    {% endif %}
+                    student review(s),
+                    {{ assignment|get_ta_evaluations|length }} evaluation(s)
+                    
+                    &nbsp;&nbsp;&nbsp;
+                    <a class="btn btn-link" href="{% url 'review:assignment_review_list' assignment.id %}">
+                      <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+                      Reviews list
+                    </a>
+                    <!-- </p> -->
+                  </td>
+                </tr>
+              {% endif %}
+                
+              <!-- <div> -->
+              <tr>
+                <td scope="row">
+                    <i class="material-icons">done</i>
+                    Assign Reviews
+                </td>
+                <td>
+                  
+                  {% if is_instructor %}
+                    <a class="btn btn-link" href="{% url 'review:manage_settings' assignment.id %}">Configure review settings</a>
+                  {% endif %}
+                  {% if assignment.course.enable_independent_pool %}
+                    <a class="btn btn-link" href="{% url 'calibration:assign_calibration_reviews' assignment.id %}">Calibrations</a>
+                  {% endif %}
+                  <a class="btn btn-link" href="{% url 'review:assign_student_reviews' assignment.id %}">Students</a>
+                  <a class="btn btn-link" href="{% url 'review:assign_spot_checks' assignment.id %}">TAs</a>
+                </td>
+              </tr>
+
+              <tr>
+                <td scope="row">
+                    <i class="material-icons">done_all</i>
+                  Assign Evaluations
+                </td>
+                <td>
+                  
+                  {% if is_instructor %}
+                  <a class="btn btn-link" href="{% url 'evaluation:manage_settings' assignment.id %}">Configure evaluation settings</a>
+                  {% endif %}
+                  <!-- <a class="btn btn-link" href="{% url 'evaluation:assign_student_evaluations' assignment.id %}">Students</a> -->
+                  {% if assignment.assignmentwithreviews.evaluationsettings %}
+                    <a class="btn btn-link"
+                      href="{% url 'evaluation:assign_spot_checks' assignment.id %}">
+                      TAs
+                    </a>
+                  {% else %}
+                    <a class="btn btn-link" disabled>TAs</a>
+                  {% endif %}
+                  {% comment %}
+                  <!-- <a class="btn btn-link" href="{% url 'evaluation:assignment_evaluation_list' assignment.id %}">Evaluations list</a> -->
+                  {% endcomment %}
+                </td>
+              </tr>
+                <!-- </div> -->
+            
+            {% endif %}
+          </table>
+
+
+        </div>
+
+      {% endfor %}
+
+    </div>
+  </div>
+
+</div>
+
+{% else %}
+
+<div class="container-fluid">
+  <h3>Please choose a course to browse reviews.</h3>
+</div>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+{% load tag_review_exists %}
+{% load get_pending_reviews %}
+
+<script>
+$(document).ready(function() {
+
+    $('#id_course').change(function(ev) {
+      var selected = $(this).val()
+      var new_action = '/review/' + selected + '/list/';
+      $('#id_filter_by_course').attr('action', new_action);
+    });
+
+});
+</script>
+
+<div class="container-fluid">
+
+  <div class="page-header">
+    <h2>Reviews</h2>
+  </div>
+
+<!--   <div class="col-md-10 col-md-offset-1">
+
+    <h3>Manage Rubrics</h3>
+
+    <a class="btn btn-primary" href="/review/rubric/question/list/">Manage rubric questions</a>  
+    <a class="btn btn-primary" href="/review/rubric/list/">Manage rubrics</a>
+  
+  </div>
+ -->
+
+
+
+  {% for course_name, course_obj in info %}
+
+    <div class="panel panel-primary">
+
+      <div class="panel-heading"><strong>Course</strong> {{ course_name }}</div>
+
+      <div class="panel-body">
+
+        <a class="btn btn-link" href="/review/{{ course_obj.course.id }}/list/">Show all the reviews</a>
+
+        {% if course_obj.is_instructor or request.user.is_superuser %}
+
+          <a class="btn btn-link" href="/review/{{ course_obj.course.id }}/assign_student_reviews/">Assign student reviews</a>  
+          <a class="btn btn-link" href="/review/{{ course_obj.course.id }}/assign_spot_checks/">Assign TA reviews</a>  
+          <a class="btn btn-link" href="/review/{{ course_obj.course.id }}/assign_self_reviews/">Assign self reviews</a> 
+
+        {% elif course_obj.is_ta %}
+
+          <a class="btn btn-link" href="/review/{{ course_obj.course.id }}/request/">Request a random review</a>  
+
+        {% endif %}
+
+
+        {% if course_obj.is_student %}
+
+
+        {% endif %}
+
+      </div>
+
+    </div>
+
+  {% endfor %}
+
+</div>
+
+{% endblock %}

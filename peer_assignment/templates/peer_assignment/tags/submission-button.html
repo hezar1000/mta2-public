@@ -1,0 +1,11 @@
+<a class="{{ classes }}"
+    {% if assignment.grace_deadline_passed %}
+        data-toggle="confirmation"
+        data-title="Late submission"
+        data-btn-ok-label="Continue"
+        data-btn-cancel-label="Cancel"
+        data-content="Assignment deadline has passed, you will be using up your late days."
+    {% endif %}
+    href="{% url target id %}">
+    {{ title }}
+</a>

@@ -1,0 +1,117 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+{% load view_file field_utils %}
+{% load md2 %}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+
+        <h2 class="page-header">
+        {% if is_create %}Create a{% else %}Edit my{% endif %} submission for assignment {{ assignment.name }}
+        </h2>
+
+        {% non_field_errors subform %}
+        
+        <h4>
+            Due on {{ assignment.deadline }}
+            {% if assignment.grace_deadline_passed %}
+                <span class="text-danger">
+                    (deadline passed)
+                </span>
+            {% endif %}
+        </h4>
+
+        {% if assignment.assignment_type == 'pdf' and assignment.statement %}
+            {% view_file assignment.statement "Problem Statement" True %}
+        {% endif %}
+
+        <h3>Answer the following questions:</h3>
+
+        <form method="post" action="{{ request.path }}" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% for field in subform.hidden_fields %}
+                {{ field }}
+            {% endfor %}
+
+            {% for field in subform.visible_fields %}
+                {% if field.name == 'nopublicuse' %}
+                {% else %}
+                    <div class="form-group">
+                        <div class="p-inline">
+                            {{ field.label_tag | markdown }} 
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        {% if field.initial.url %}
+                            <p style="margin-top: -10px;">Already Submitted file
+                                <a href="{{ field.initial.url }}"><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span></a>
+                            </p>
+                        {% endif %}
+                        <div>
+                            {{ field }}
+                            {% if field.errors %}
+                                <br/>
+                                <span style="color: red">{{ field.errors.as_text }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            {% for field in subform.visible_fields %}
+                {% if field.name == 'nopublicuse' %}
+                    <div class="form-group row">
+                        <div class="col-md-11 col-form-label">
+                            {{ field }} {{ field.label_tag }} 
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <div class="" style="margin-bottom: 10px;">
+                <button
+                    {% if assignment.grace_deadline_passed %}
+                        data-toggle="confirmation"
+                        data-title="Late submission"
+                        data-btn-ok-label="Continue"
+                        data-btn-cancel-label="Cancel"
+                        data-content="Assignment deadline has passed, you will be using up your late days."
+                    {% endif %}
+                    type="submit" class="btn btn-primary">Save your submission</button>
+            </div>
+        </form>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('textarea').each(function(i, input) {
+            var d = document.createElement('p')
+            d.className = "help-block char-count";
+            var sCount = document.createElement('span');
+            sCount.className = 'badge badge-info';
+            var sTotal = document.createElement('span');
+            var fixCount = function() {
+                sCount.innerHTML = input.value.length;
+                if( input.value.length >= input.maxLength )
+                    sCount.className = 'badge badge-warn';
+                else
+                    sCount.className = 'badge badge-info';
+            }
+            fixCount();
+            sTotal.innerHTML = ' / ' + input.maxLength + ' characters';
+            d.appendChild(sCount);
+            d.appendChild(sTotal);
+            input.parentElement.appendChild(d)
+
+            input.addEventListener('keyup', function() {
+                fixCount();
+            });
+        });
+    });
+</script>
+{% endblock %}

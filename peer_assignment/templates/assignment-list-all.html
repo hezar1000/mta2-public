@@ -1,0 +1,33 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+  <div class="page-header">
+      <h2>Assignments</h2>
+  </div>
+
+  <div class="row">
+    <div class="col-md-10 col-md-offset-1">
+
+      {% for key, value in info.items %}
+            <div class="panel panel-primary">
+              <div class="panel-heading"><strong>Course</strong> {{ value.course.displayname }}</div>
+              <div class="panel-body">
+                {% if value.is_instructor %}
+                  <a class="btn btn-link" href="/assignment/{{ value.course.id }}/create/">Create a new assignment</a>
+                {% else %}
+                {% endif %}
+              </div>
+              {% load assignment_list %}
+              {% assignment_list request.user value.assignments value.is_student value.is_instructor %}
+            </div>
+     {% endfor %}
+     
+    </div>
+  </div>  
+
+</div>
+
+{% endblock %}

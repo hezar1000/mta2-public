@@ -1,0 +1,133 @@
+
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+{% load get_function_result %}
+{% load submission_button %}
+{% load view_file %}
+{% load code_parse %}
+{% load md2 %}
+
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <h3 class="page-header">
+            {{ assignment.name }}
+        </h3>
+
+      <h5>
+        {% if not is_student %}
+            {% if assignment.browsable %}
+                (Visible to students)
+            {% else %}
+                (Hidden from students)
+            {% endif %}
+        {% endif %}
+      </h5>
+
+    <div>
+        <h5>Deadline: {{ assignment.deadline }}
+            {% if not assignment.deadline_passed %}        
+            {% else %}
+                (passed)
+            {% endif %}
+        </h5>
+    </div>
+    {% if assignment.assignment_type == 'pdf' and assignment.statement %}
+        {% view_file assignment.statement "Problem Statement" True %}
+    {% endif %}
+
+    {% if assignment.assignmentfile_set.count > 0 %}
+        <div>
+            <h5>Files:</h5>
+            {% for file in assignment.assignmentfile_set.all %}
+                <div>
+                    <a href="{{ file.attachment.url }}" download>{{ file.filename }}</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if questions.count > 0 %}
+        <div>
+            <h5>Questions:</h5>
+            <ul>
+            {% for question in questions %}
+            <li>
+                
+                <div class="p-inline">{{ forloop.counter }}. {{ question.title }}: {{ question.description | code_parse:my_course_member | markdown }}
+                    {% if not is_student %}
+                        [Using the rubric: {{ question.rubric }}]
+                    {% endif %}
+                </div>
+
+                {% if question.category == "MULT" %}
+                <ul class="question-choice">
+                    {% for choice in question.choices.all %}
+                        <li>{{ forloop.counter }}- {{ choice.choice_text }}</li>
+                    {% endfor %}
+                </ul>
+                {% elif question.category == "FILE" %}
+                    {% if not is_student %}
+                        <div><i>This is a file question</i></div>
+                    {% endif %}
+                {% elif question.category == "TEXT" %}
+                    {% if not is_student %}
+                        <div><i>This is a text question</i></div>
+                    {% endif %}
+                {% endif %}
+
+            </li>
+            {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if is_instructor %}
+
+        <div class="form-group">
+            <a class="btn btn-primary" href="/assignment/{{ assignment.id }}/edit/">Edit</a>
+            <a class="btn btn-danger"
+                href="/assignment/{{ assignment.id }}/delete/"
+                data-toggle="confirmation"
+                data-btn-ok-class="btn-danger"
+                data-btn-ok-label="Absolutely!" data-btn-ok-icon="glyphicon glyphicon-remove"
+                data-btn-cancel-class="btn-warning"
+                data-btn-cancel-label="Stoooop!" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
+                data-content="By doing this, every submission and/or review ever made for this assignment will also be removed!">
+                Delete
+            </a>
+            {% if assignment.submission_required %}
+                <a class="btn btn-warning pull-right"
+                    href="{% url 'assignment:batch_submit' assignment.id %}">
+                    Upload Submissions
+                </a>
+            {% endif %}
+            <a class="btn btn-warning pull-right"
+                href="{% url 'calibration:calibration_assignment_create' assignment.id %}">
+                Make Calibration Submission
+            </a>
+        </div>
+    {% elif is_student %}
+        <div class="form-group">
+            {% if my_submission %}
+                <a class="btn btn-primary" href="{% url 'assignment:submission_view' my_submission.id %}">View my submission</a>
+                {% if my_submission.can_compose_submission %}
+                    {% submission_edit_button my_submission 'btn btn-success' 'Edit my submission' %}
+                {% endif %}
+            {% else %}
+                {% get_function_result assignment 'can_compose_submission' my_course_member as can_compose_submission %}
+                {% if can_compose_submission %}
+                    {% submission_create_button assignment 'btn btn-primary' 'Create a submission' %}
+                {% endif %}
+            {% endif %}
+        </div>
+    {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+

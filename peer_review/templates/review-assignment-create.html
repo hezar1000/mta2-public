@@ -1,0 +1,40 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="page-header">
+      <h2>Assign a review for course {{ course.displayname }}</h2>
+    </div>
+    
+    <form method="post" action="/review/{{ course.id }}/assignment/create/">
+      {% csrf_token %}
+
+      {% if reviewAssignForm.non_field_errors %}
+        <div class="alert alert-warning">
+          {{ reviewAssignForm.non_field_errors }}
+        </div>
+      {% endif %}
+
+      {% for field in reviewAssignForm %}
+          <div class="form-group row">
+              <div class="col-md-2 col-form-label">
+                  {{ field.label_tag }} 
+              </div>
+              <div class="col-md-3">
+                  {{ field }}
+              </div>
+              <div class="col-md-6">
+                {{ field.help_text }}
+              </div>
+          </div>
+      {% endfor %}
+
+      <button type="submit" class="btn btn-primary">Assign the review</button>
+    </form>
+
+
+
+</div>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends "form_simp_base.html" %}
+{% block content %}
+
+{% load get_pending_reviews %}
+{% load has_review %}
+{% load get_ta_reviews %}
+{% load get_student_reviews %}
+{% load pagination %}
+
+<div class="container-fluid">
+    
+    <div class="page-header mta-header-with-btn" style="margin-top:0">
+        <h3>
+            Submission/Review list for Assignment <strong>{{ assignment.name }}</strong> <small>(Course {{ assignment.course.displayname }})</small>
+        </h3>
+        {% if not anonymize_st_reviews %}
+            <div class="btn-group mta-btn-group-title">
+                <a class="btn btn-primary" href="{% url 'grade:export_assigment' assignment.id %}">
+                    Export to CSV
+                </a>
+                <a class="btn btn-warning" href="{% url 'grade:export_comp_ids' assignment.id %}">
+                    Export Component IDs to CSV
+                </a>
+                <a class="btn btn-success" href="{% url 'grade:import_assigment' assignment.id %}">
+                    Import from CSV
+                </a>
+                <a class="btn btn-primary" href="{% url 'grade:upload_component_grades' assignment.id %}">
+                    Upload Component-wise grades
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if is_student %}
+        <h4>Only allowed for course instructor and TA(s)</h4>
+    {% else %}
+
+        {% if assignment.assignmentsubmission_set.all|length == 0 %}
+        No submission received.
+        {% else %}
+
+        <p>
+        &nbsp;&nbsp;&nbsp;
+        {{ assignment.assignmentsubmission_set.count }} submission(s), 
+        {{ assignment.ta_reviews_count }} TA review(s), 
+        {% if assignment.instructor_reviews_count %}
+            {{ assignment.instructor_reviews_count }} instructor review(s),
+        {% endif %}
+        {{ assignment.student_reviews_count }} student review(s)
+        </p>
+
+        <div>
+        <a class="btn btn-link" href="/review/{{ assignment.id }}/assign_student_reviews/">Assign student reviews</a>  
+        <a class="btn btn-link" href="/review/{{ assignment.id }}/assign_spot_checks/">Assign TA reviews</a>  
+        </div>
+
+        <form type="GET" action=".">
+            <input type="hidden" name="per_page" value="{{ per_page }}"/>
+            <div class="col-md-4 col-md-offset-4">
+                <div class="input-group">
+                <input type="text" name="search" value="{{ search_term }}" class="form-control" placeholder="Search for...">
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="submit">
+                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                    </button>
+                </span>
+                </div>
+            </div>
+        </form>
+
+        <table class="table">
+        <thead>
+            <tr>
+            <th class="col-md-2">Submission</th>
+            {% if not anonymize_st_reviews %}
+                <th class="col-md-1">Grade</th>
+            {% endif %}
+            <!-- <th class="col-md-1">Grading method</th> -->
+            <th>Reviews</th> 
+            </tr> 
+        </thead> 
+
+        <tbody>
+        {% for submission in submissions_page.object_list %}
+
+            <tr>
+
+            <td>
+                <a href="/assignment/submission/{{ submission.id }}/view/" target="_blank">
+                {{ submission.author.user.first_name }} {{ submission.author.user.last_name }}
+                </a>
+            </td>
+            
+            {% if not anonymize_st_reviews %}
+                <td>
+                    <!-- {{ submission.final_grade }} -->
+                    {%  widthratio submission.final_grade submission.assignment.max_total_grade 100 %}&#37
+                </td>
+            {% endif %}
+
+            <!-- <td><small>{{submission.final_grading_method}}</small></td> -->
+
+            <td>
+                {% for review_assignment in submission.reviewassignment_set.all|get_completed_reviews %}
+
+                    <span>
+                        {% if anonymize_st_reviews and review_assignment.grader.role == 'student' %}
+                            Student Review
+                        {% else %}
+                            {% if review_assignment.submission.calibration_id == 0 %}
+                                <a href="/review/{{ review_assignment.id }}/view/" target="_blank"
+                                class="{% if review_assignment.grader.role == 'ta' %}text-green{% elif review_assignment.grader.role == 'instructor' %}text-danger{% elif review_assignment.flag %}text-warning{% endif %}">
+                                {{ review_assignment.grader.user.first_name }} {{ review_assignment.grader.user.last_name }}
+                                [{% if review_assignment.grader.role == 'ta' %}TA
+                                    {% endif %}Grade{% if review_assignment.question %}
+                                        - {{review_assignment.question.title}}{% endif %}:
+                                    <!-- {{ review_assignment.assigned_grade }}, Weight: {{review_assignment.markingload}}] -->
+                                    {%  widthratio review_assignment.assigned_grade review_assignment.submission.assignment.max_total_grade 100 %}&#37, Weight: {{review_assignment.markingload}}] 
+                                </a>
+                            {% else %}
+                                <a href="/calibration/{{ review_assignment.id }}/view/" target="_blank"
+                                class="{% if review_assignment.grader.role == 'ta' %}text-green{% elif review_assignment.grader.role == 'instructor' %}text-danger{% elif review_assignment.flag %}text-warning{% endif %}">
+                                {{ review_assignment.grader.user.first_name }} {{ review_assignment.grader.user.last_name }}
+                                [{% if review_assignment.grader.role == 'ta' %}TA
+                                    {% endif %}Grade{% if review_assignment.question %}
+                                        - {{review_assignment.question.title}}{% endif %}:
+                                    <!-- {{ review_assignment.assigned_grade }}, Weight: {{review_assignment.markingload}}] -->
+                                    {%  widthratio review_assignment.assigned_grade review_assignment.submission.assignment.max_total_grade 100 %}&#37, Weight: {{review_assignment.markingload}}] 
+ 
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                        &nbsp;&nbsp;
+                    </span>
+
+                {% endfor %}
+
+                {% if submission.reviewassignment_set.all|length == 0 %}
+                    No review assigned
+                {% else %}
+
+                    {% for review_assignment in submission.reviewassignment_set.all|get_pending_reviews %}
+
+                    <span>
+                        {% if anonymize_st_reviews and review_assignment.grader.role == 'student' %}
+                            Student Review
+                        {% else %}
+                            {{ review_assignment.grader.get_user_fullname }}{% if review_assignment.question %}<small> ({{ review_assignment.question.title }})</small>{% endif %}{% if not forloop.last %},{% endif %}
+                        {% endif %}
+                        &nbsp;
+                    </span>
+
+                    {% endfor %}
+
+                {% endif %}
+            </td>
+
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+        </table>
+        {% with "&search="|add:search_term|add:"&per_page="|add:per_page as extra_args %}
+            {% pagination submissions_page page_range submissions_count request.path extra_args %}
+        {% endwith %}
+
+
+        {% endif %}
+
+    {% endif %}
+
+
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+{% load tag_review_exists %}
+{% load get_pending_reviews %}
+{% load has_review %}
+{% load get_my_reviews %}
+{% load get_role %}
+
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-sm-6 col-md-offset-2 col-md-8">
+      <h2 class="page-header">
+        My Grades
+        <small>Reviews of my submissions</small>
+        <!--<small>{{ course.displayname }}</small>-->
+      </h2>
+
+              <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="col-md-3">Assignment</th>
+                        <th class="col-md-3">My submission</th>
+                        <th>Reviews</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                  {% for submission in submissions %}
+                    <tr>
+                      <td>Assignment {{ submission.assignment.name }}</td>
+                      <td><a href="/assignment/submission/{{ submission.id }}/view/" target="_blank">My submission</a></td>                      
+                      <td>
+
+                        {% if submission.reviewassignment_set.all|length == 0 %}
+                            No review assigned
+                        {% else %}                        
+
+                            {% for review in submission.reviewassignment_set.all %}
+                                {% get_role course review.grader as grader_role %}
+                                {% if review|tag_review_exists %}
+                                <div>
+                                    <a href="/review/{{ review.id }}/view/" target="_blank">
+                                        {% if grader_role == 'student' %}
+                                            Student
+                                        {% elif grader_role == 'ta' %}
+                                            TA
+                                        {% else %}
+                                            Instructor
+                                        {% endif %}
+                                        Review
+                                    </a>
+                                </div>
+                                {% else %}
+                                <div>                    
+                                    {% if grader_role == 'student' %}
+                                        Student
+                                    {% elif grader_role == 'ta' %}
+                                        TA
+                                    {% else %}
+                                        Instructor
+                                    {% endif %}
+                                    Review incomplete
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+
+                        {% endif %}
+
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+
+    </div>
+  </div>
+
+</div>
+
+
+{% endblock %}

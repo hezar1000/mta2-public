@@ -1,0 +1,177 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+{% load tag_review_exists %}
+{% load get_pending_reviews %}
+{% load has_review %}
+{% load get_my_reviews %}
+{% load get_reviews_to_be_completed %}
+{% get_reviews_to_be_completed reviews as reviews_to_be_completed %}
+
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-sm-6 col-md-offset-2 col-md-8">
+      <h2 class="page-header">
+        Reviews
+        <!--<small>{{ course.displayname }}</small>-->
+      </h2>
+
+      <h3>Reviews to be completed</h3>
+      {% if reviews_to_be_completed|length == 0 %}
+      <div class="well">No reviews assigned to you.</div>
+      {% else %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Submission</th> 
+            <th>Deadline</th> 
+            <th>Link</th> 
+          </tr> 
+        </thead>
+        <tbody>
+          {% for review in reviews_to_be_completed %}
+            <tr class="bg-danger">
+              <td>
+                <a href="/assignment/submission/{{ review.submission.id }}/view/" target="_blank">
+                {% if is_student %}
+                  Submission for {{ review.submission.assignment.name }}
+                {% else %}
+                  {{ review.submission.author.user.first_name }} 
+                  {{ review.submission.author.user.last_name }}
+                {% endif %}
+                </a>
+              </td>
+              <td>{{ review.deadline }}</td>
+              {% if review.deadline > now  %}
+              <td><a href="/review/{{ review.id }}/create/" target="_blank">Create my review</a></td>
+              {% else %}
+              <td><strong>The deadline has passed</strong></td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      <h3>My reviews of other submissions</h3>
+
+      {% if not course|has_review %}
+      <div class="alert alert-info" role="alert" style="margin: 4px;">
+        No review assigned to me.
+      </div>  
+      {% else %}
+  
+      <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+      {% for assignment in course.assignment_set.all %}
+        {% if assignment.browsable %}
+        {%if assignment.get_review_settings%}
+          {% get_my_reviews assignment request.user as my_reviews %}
+
+          <div class="panel panel-success">
+
+            <div class="panel-heading" role="tab">
+              <h4 class="panel-title">
+                <strong>{{ assignment.name }}</strong>
+              </h4>
+            </div>
+
+            <div class="panel-body" id="collapse-{{ assignment.id }}">
+              <div>
+                {% if is_ta %}
+                  <a class="btn btn-link" href="/review/{{ assignment.id}}/request/">Request a random review</a>
+                {% endif %}
+              </div>
+
+              {% if my_reviews|length == 0 %}
+                <div>
+                  No review assigned
+                </div>
+              {% else %}
+
+                <table class="table">
+
+                  <thead>
+                    <tr>
+                      <th class="col-md-3">Submission</th> 
+                      <th class="col-md-3">Deadline</th>
+                      <th>My Review</th> 
+                    </tr> 
+                  </thead> 
+
+                  <tbody>
+                    
+                      {% for review in my_reviews %}
+                        {% if review|tag_review_exists %}
+                        <tr class="bg-success">
+                        {% elif not review.deadline_passed %}
+                        <tr class="bg-danger">
+                        {% else %}
+                        <tr class="bg-warning">
+                        {% endif %}
+                          <td>
+                            <a href="/assignment/submission/{{ review.submission.id }}/view/" target="_blank">
+                              {% if is_student %}
+                                {% if review.submission.author.user == request.user %}
+                                  My own submission
+                                {% elif review.submission.calibration_id == 0 %}
+                                  A student's submission
+                                {% else %}
+                                  Calibration review
+                                {% endif %}
+                              {% else %}
+                                {{ review.submission.author.user.first_name }} 
+                                {{ review.submission.author.user.last_name }}
+                              {% endif %}
+                            </a>
+                          </td>
+                          <td>
+                            {% if review.submission.calibration_id == 0 %}
+                            {{ review.deadline }}
+                            {% else %}
+                            ---
+                            {% endif %}
+                          </td>
+                          <td>
+                            {% if review|tag_review_exists and review.submission.calibration_id == 0%}
+                              <a href="/review/{{ review.id }}/view/" target="_blank">Show my review</a>
+                              &nbsp;&nbsp;&nbsp;
+                            {% elif review|tag_review_exists and review.submission.calibration_id > 0%}
+                              <a href="/calibration/{{ review.id }}/view/" target="_blank">Show my review</a>
+                              &nbsp;&nbsp;&nbsp;
+                            {% elif review|tag_review_exists and review.submission.calibration_id == 0 %}
+                              <a href="/review/{{ review.id }}/edit/" target="_blank">Edit my review</a>
+                            {% elif not review.deadline_passed and review.submission.calibration_id == 0 %}
+                              <a href="/review/{{ review.id }}/create/" target="_blank">Create my review</a>
+                            {% elif review.submission.calibration_id > 0%}
+                            <a href="/calibration/{{ review.id }}/create/" target="_blank">Create my review</a>
+
+                            {% else %}
+                              <p>Missing review</p>
+                            {% endif %}
+                          </td>
+                        </tr>
+                      {% endfor %}
+
+                  </tbody>            
+
+                </table>
+
+              {% endif %}
+
+            </div>
+
+          </div>
+        {% endif %}
+        {% endif %}
+
+      {% endfor %}
+      </div>
+
+  {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

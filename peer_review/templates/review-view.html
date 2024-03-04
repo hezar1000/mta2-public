@@ -1,0 +1,138 @@
+{% extends 'base-review-view.html' %}
+
+{% load submission_view %}
+
+{% block submission_main %}
+{%if is_staff or is_author%}
+    {% submission_view_extra_q request.user model.submission components 'review-view-rubric-answers.html' questions %}
+{% else %}
+    {% submission_view_extra_q request.user model.submission components 'review-view-rubric-answers.html' questions %}
+{% endif %}
+{% endblock %}
+
+{% block side_left %}
+
+    {% if model.evaluation_grade is not None %}
+        {%if is_staff or is_author%}
+            <div class="thumbnail">
+                <div class="caption">
+                    <h4>Grade:</h4>
+                    {{ model.evaluation_grade | floatformat }} / {{ model.max_evaluation_grade }}
+
+                    {% if model.evaluations.exists %}
+                        <h4>Evaluations:</h4>
+
+                        {% for eval in model.evaluations.all %}
+                            <div>
+                            {% if eval.submitted %}
+                                <a href="{% url 'evaluation:view' eval.id %}">TA Evaluation</a>
+                            {% else %}
+                                Evaluation unavailable
+                            {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
+
+{% block header %}
+    {% if model.flag %}
+        <div class="alert alert-danger">
+            <Strong>This review has been flagged as inappropriate.</Strong>
+            Reason: "{{ model.flag.reason }}"
+        </div>
+    {% endif %}
+    {% if is_staff and related_evaluations %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h5>
+                    Related evaluations
+                    <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse-reassign" aria-expanded="true" aria-controls="collapseOne">
+                        (Show/Hide)
+                    </a>
+                </h5>
+            </div>
+
+            <div class="panel-body panel-collapse collapse {% if related_evaluations_incomplete %}in{% endif %}" id="collapse-reassign">
+                <p>Your evaluation assignments for the same submission:</p>
+                <table class="table">
+                    <thead>
+                        <tr>
+                        <th>Evaluation</th> 
+                        <th>Deadline</th> 
+                        <th>Link</th>
+                        </tr> 
+                    </thead>
+                    <tbody>
+                        {% for evaluation in related_evaluations %}
+                            <tr class="{% if not evaluation.submitted %}{% if evaluation.deadline_passed %}danger{% else %}warning{% endif %}{% endif %}">
+                                <td><a href="{% url 'review:view' evaluation.review.id %}">Review evaluation for {{ evaluation.review.submission.assignment.name }}</a></td>
+                                <td>{{ evaluation.deadline }}{% if evaluation.deadline_passed %} <strong>(passed)</strong>{% endif %}</td>
+                                <td>
+                                    {% if evaluation.submitted %}
+                                        <a href="/evaluation/{{ evaluation.id }}/view/" target="">View my evaluation</a>
+                                    {% else %}
+                                        <a href="/evaluation/{{ evaluation.id }}/create/" target="">Create my evaluation</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block footer %}
+    <div style="margin:15px 0 5px 0px">
+        {% if is_staff and can_be_evaluated %}
+            <a class="btn btn-warning"
+                href="{% url 'evaluation:request_evaluation' model.id %}">
+                Request Evaluation
+            </a>
+        {% endif %}
+        {% if is_staff and not model.flag %}
+            <a class="btn btn-danger"
+                href="{% url 'grade:flag_review' model.id %}">
+                <span class="glyphicon glyphicon-thumbs-down"></span>
+                Flag
+            </a>
+        {% endif %}
+        {% if can_report and not is_staff %}
+            <a class="btn btn-danger" id="flag-button"
+                href="{% url 'grade:report_review' model.id %}"
+                onclick="return showAddAnotherPopup(this);">
+                <span class="glyphicon glyphicon-thumbs-down"></span>
+                Mark as inappropriate
+            </a>
+
+            <button class="btn btn-success" id= "endorse" >  <span class="glyphicon glyphicon-thumbs-up"></span> Endorse as a great review</button>
+        {% endif %}
+    </div>
+
+    <script>
+        window.popupContinuation = function() {
+            document.getElementById("flag-button").parentElement.innerHTML = (
+                '<div class="alert alert-success">'
+                + 'Thanks for reporting the problem, a TA has been assigned to investigate your report.'
+                + '</div>'
+            );
+        };
+    </script>
+
+<script type="text/javascript">
+    var btn= document.getElementById("endorse") 
+    btn.addEventListener("click", function() {
+    alert("Thanks for letting us know about this awsome reviewer!")
+    $.ajax({
+            url: '/review/view/endorse/{{model.id}}',
+            method : 'GET',
+        }); 
+    });
+ </script>
+{% endblock %}

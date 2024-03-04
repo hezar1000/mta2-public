@@ -1,0 +1,43 @@
+{% include "base-lecture.html" %}
+
+{% load static %}
+
+{% block content %}
+
+    <script>
+        if (window.location.href.includes('?stop-poll=true')) {
+            // remove query string from url
+            window.history.replaceState({}, document.title, "/polling/student/");
+        }
+
+        socket.onmessage = (e) => {
+            let message = JSON.parse(e.data);
+            let key = message.key;
+            let value = message.value;
+
+            if (key === 'begin-lecture' ||
+                key === 'end-lecture' ||
+                key === 'start-poll') {
+                    window.location.reload();
+                }
+                
+            else if (key === 'stop-poll') {
+                window.location.href = window.location.href + '?stop-poll=true';
+            }
+        }
+    </script>
+
+    {% if poll %}
+    <h3>Polling</h3>
+    {% include "view-poll-student.html" %}
+    {% endif %}
+
+    {% if results %}
+    {% include "view-results.html" %}
+    {% endif %}
+
+    <script>
+        parent.resizeIframe(this.frameElement);
+    </script>
+
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends 'base-review-view.html' %}
+
+{% load submission_view %}
+
+{% block submission_main %}
+    {% submission_view_extra request.user model.review.submission components 'evaluation-view-rubric-answers.html' %}
+{% endblock %}

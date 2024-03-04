@@ -1,0 +1,29 @@
+{% extends "form_simp_base.html" %} {% block content %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+
+            <div class="page-header">
+                <h2>Assign calibration reviews for assignment {{ assignment.name }}</h2>
+            </div>
+
+            <form method="post" action="/calibration/{{ assignment.id }}/assign_calibration_reviews/">
+                {% csrf_token %}
+
+                <div class="form-group row">
+                    <label for="id_numcalibrationreviews" class="col-md-4 col-form-label">Number of calibration reviews per supervised student to assign:</label>
+
+                    <div class="col-md-4">
+                        <input type="text" name="numcalibrationreviews" maxlength="128" id="id_calibrationnumreviews" />
+                    </div>
+                </div>
+
+
+                <button type="submit" class="btn btn-primary">Assign calibration reviews</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

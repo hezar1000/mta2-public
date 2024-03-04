@@ -1,0 +1,63 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+  <div class="page-header">
+    <h2>Assign self reviews</h2>
+  </div>
+  
+    <form method="post" action="/review/{{ cid }}/assign_self_reviews/">
+        {% csrf_token %}
+
+        <div class="form-group row">
+          <label for="id_assignment" class="col-md-2 col-form-label">Assignment:</label> 
+          <div class="col-md-3">
+              <select name="assignment" required class="form-control" id="id_assignment">
+                  <option value="" selected>---------</option>
+                  {% for assignment in assignments %}
+
+                      <option value="{{ assignment.id }}">
+                          {{ assignment }}
+                      </option>
+
+                  {% endfor %}
+              </select>
+          </div>
+        </div>
+
+        <div class="form-group row">
+          <div class="col-md-2 col-form-label">
+            <label for="id_rubric">Rubric:</label>
+          </div>
+
+          <div class="col-md-3">
+            <select name="rubric" required class="form-control" id="id_rubric">
+              <option value="" selected>---------</option>
+                {% for rubric in rubrics %}
+                  <option value="{{ rubric.id }}">{{ rubric }}</option>
+                {% endfor %}
+            </select>
+          </div>
+          
+        </div>
+
+        <div class="form-group row">
+          <div class="col-md-2 col-form-label">
+              <label for="id_deadline">Deadline:</label> 
+          </div>
+          <div class="col-md-3">
+              <input type="date" name="deadline_date" class="form-control" required id="id_deadline_date" />
+
+            <input type="time" name="deadline_time" class="form-control" required id="id_deadline_time" />
+          </div>
+        </div>
+
+
+        <button type="submit" class="btn btn-primary">Assign self reviews</button>
+    </form>
+
+</div>
+
+{% endblock %}

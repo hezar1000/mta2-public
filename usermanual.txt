@@ -1,0 +1,19 @@
+
+Get into virtual environment:
+
+source virtualenv/env1/activate
+
+Run mta2
+
+python3 manage.py runserver
+
+
+Admin interface:
+
+http://127.0.0.1:8000/admin/
+
+Admin username: admin
+Admin password: mechanicalta
+
+
+

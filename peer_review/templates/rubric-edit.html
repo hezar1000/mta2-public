@@ -1,0 +1,38 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+  <div class="page-header">
+    <h2>Create a rubric</h2>
+  </div>
+
+  <form method="post" action="/review/rubric/{{ rid }}/edit/">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-warning">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    {% for field in form %}
+        <div class="form-group row">
+            <div class="col-md-2 col-form-label">
+                {{ field.label_tag }} 
+            </div>
+            <div class="col-md-3">
+                {{ field }}
+            </div>
+            <div class="col-md-6">
+              {{ field.help_text }}
+            </div>
+        </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">Save this rubric</button>
+  </form>
+
+</div>
+{% endblock %}

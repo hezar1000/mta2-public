@@ -1,0 +1,44 @@
+{% extends "base-review-create.html" %}
+{% load submission_view %}
+
+{% block submission_main %}
+    {% submission_view_form_q request.user model.submission form.visible_fields questions %}
+{% endblock %}
+
+{% block form_footer %}
+    {% if is_staff %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h5>
+                    Reassign this review
+                    <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse-reassign" aria-expanded="true" aria-controls="collapseOne">
+                        (Show/Hide)
+                    </a>
+                </h5>
+            </div>
+
+            <div class="panel-body panel-collapse collapse" id="collapse-reassign">
+                <p>You can reassign your reviews to another TA/instructor in case you can't do them on your own.</p>
+                <br/>
+            
+                <form method="POST" action="{% url 'review:reassign' model.id %}">
+                    {% csrf_token %}
+                    <div class="form-group row">
+                        <label for="id_member" class="col-md-2 col-form-label">User:</label> 
+                        <div class="col-md-3">
+                            <select name="member" required class="form-control" id="id_member">
+                                <option value="" selected>---------</option>
+                                {% for member in members %}
+                                    <option value="{{ member.id }}">
+                                        {{ member.user.first_name }} {{ member.user.last_name }} ({{ member.role }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning">Reassign</button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,27 @@
+<div class="review-view">
+<h4>The result:</h4>
+<div class="mathjax">
+    {% for content in data %}
+    <div><b>Rubric question:</b>  {{ content.question }}</div>
+    <br/>
+    <div>
+        <b>Your answer</b>: {{ content.answer }}
+        <small class="pale-text">
+                <!-- ({%  widthratio content.grade content.max_grade 100 %} point{{ content.grade | pluralize }} out of {%  widthratio content.max_grade content.max_grade 100 %})  -->
+                ({{content.grade}} point{{ content.grade | pluralize }}) 
+                <!-- ({%  widthratio content.grade content.max_grade 100 %}&#37) -->
+        </small>
+        <br/> <b>The correct answer</b> {{ content.groundtruth_answer }}
+        <small class="pale-text"> 
+                <!-- ({%  widthratio content.groundtruth_grade content.max_grade 100 %} point{{ content.groundtruth_grade | pluralize }} out of {%  widthratio content.max_grade content.max_grade 100 %}) -->
+                ({{content.groundtruth_grade}} point{{ content.groundtruth_grade | pluralize }}) 
+                <!-- ({%  widthratio content.groundtruth_grade content.max_grade 100 %}&#37) -->
+        </small>
+        <br/><br/> 
+        <b>Your reasoning:</b> {{ content.reason }}
+        <br/> <b>The suggested reasoning</b>: {{ content.groundtruth_reason }}
+        <br/><br/>
+    </div>
+    {% endfor %}
+</div>
+</div>

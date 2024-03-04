@@ -1,0 +1,136 @@
+{% load filename list_files view_file view_component_grade %}
+{% load code_parse %}
+{% load md2 %}
+
+{% if show_header %}
+    <h2 class="page-header">A submission for assignment {{ sub.assignment.name }} 
+    <small>in course {{ sub.assignment.course.displayname }}</small>
+    </h2>
+{% endif %}
+
+{% if author_and_details_visible %}
+    <!-- <div>Author: {{ sub.author.user.first_name }} {{ sub.author.user.last_name }}</div> -->
+    {% if is_staff %}
+        {% if sub.assignment.max_attempts %}
+            Attempts so far: {{ sub.attempts }} / {{ sub.assignment.max_attempts }}
+        {% endif %}
+    {%endif%}
+{% endif %}
+
+{% if show_statement %}
+    {% if sub.assignment.assignment_type == 'pdf' and sub.assignment.statement %}
+        {% view_file sub.assignment.statement "Assignment Statement" True %}
+    {% endif %}
+    <hr/>
+{% endif %}
+
+<!-- {% if show_splitscreen %} -->
+<!-- {% endif %} -->
+    <div class="row">
+        <div class="col pull-right">
+        <button onclick="toggleSplitScreen()" class="btn btn-primary">Toggle split-screen</button>
+        </div>
+    </div>
+
+{% for content in contents %}
+    {% if not forloop.first %}<br/>{% endif %}
+    <div id="question_box">
+        <div class="p-inline"><b>Question:</b> {{ content.question | code_parse:sub.author | markdown }}</div>
+    
+        <div>
+            <!-- TODO: checkout why we needed this? -->
+            <!-- {# {% if content.question_type == 'FILE' %} #}
+                Answer:
+                {# {% list_files content.content_obj.choice.question content.content_obj.review_assignment %} #} -->
+            {% if content.question_type == 'FILE' %} <!-- former EMPTY type -->
+                {% view_file content.answer 'Answer:' False %}
+            {% else %}
+                <b>Answer:</b> {{ content.answer | linebreaks }}
+            {% endif %}
+        </div>
+
+        {% if content.extra %}
+            {% with data=content.extra %}
+                {% include extra_template %}
+            {% endwith %}
+        {% endif %}
+    </div>
+
+    {% if content.fields %}
+        <div id="answer_box">
+            <h4>Answer the following questions:</h4>
+            <div class="container-fluid mathjax">
+                {% for field in content.fields %}
+                    <div class="form-group row bg-warning">
+                        {{ field.label_tag }}
+                        {% if field.errors %}
+                            <br/>
+                            <span style="color: red">{{ field.errors.as_text }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group row">
+                        {{ field }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if false %} <!--Change from "if show_grade" -->
+        {% view_component_grade content.component is_staff %}
+    {% endif %} 
+        
+    
+
+
+    <h2></h2>
+{% endfor %}
+
+
+{% if author_and_details_visible %}
+    {% if sub.nopublicuse %}
+    <div>I do NOT want my submission to be used anonymously in public.</div>
+    {% else %}
+    <div>I am fine with my submission to be used anonymously in public.</div>
+    {% endif %}
+
+    <div>
+        Last modified on: {{ sub.time_last_modified }}
+
+        {% if sub.late_units_used > 0 %}
+            <span class="text-warning">
+            ({{ sub.late_units_used | floatformat:0 }} late day{{ sub.late_units_used | pluralize }} used)
+            </span>
+        {% endif %}
+    </div>
+    <div>Deadline: {{ sub.assignment.deadline }}
+        {% if sub.assignment.deadline_passed %}(passed){% endif %}
+    </div>
+{% endif %}
+
+<script>
+function toggleSplitScreen() {
+    question_box = document.getElementById('question_box')
+    answer_box = document.getElementById('answer_box')
+
+    // if splitscreen off, turn it on
+    if (question_box.style.overflowY == '') {
+        question_box.style.overflowY = 'scroll'
+        question_box.style.maxHeight = '500px'
+        answer_box.style.overflowY = 'scroll'
+        answer_box.style.maxHeight = '500px'
+    }
+    // otherwise, turn it back off
+    else {
+        question_box.style.overflowY = ''
+        question_box.style.maxHeight = ''
+        answer_box.style.overflowY = ''
+        answer_box.style.maxHeight = ''
+    }
+    
+    // toggle width of columns between 6 and 12
+    question_box.classList.toggle('col-md-6');
+    answer_box.classList.toggle('col-md-6');    
+}
+</script>

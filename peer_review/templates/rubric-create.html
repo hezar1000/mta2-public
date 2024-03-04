@@ -1,0 +1,85 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-md-12">
+
+        <div class="page-header">
+            <h2>{% if is_create %}Create{% else %}Edit{% endif %} a rubric</h2>
+          </div>
+      
+      <div class="col-md-6">
+        <!-- Form -->
+        <form method="post" action="{{ request.path }}">
+          {% csrf_token %}
+
+          {% if is_popup %}
+            <input name="popup" type="hidden" value="1" />
+          {% endif %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-warning">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          {% for field in form %}
+              <div class="form-group row">
+                  <div class="col-md-4 col-form-label">
+                      {{ field.label_tag }} 
+                      
+                  </div>
+                  <div class="col-md-7">
+                      <small>
+                        <p class="form-text text-muted">
+                          {{ field.help_text }}
+                        </p>
+                      </small>
+                      {{ field }}
+                  </div>
+              </div>
+          {% endfor %}
+          
+          <div class="form-group">
+            <button type="submit" class="btn btn-primary">Save this rubric</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Preview -->
+      <div class="col-md-6 mathjax">
+          <h4>Preview:</h4>
+
+          <div class="well" id="preview"></div>
+      </div>
+    
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    $(document).ready(function(){
+      var questions = JSON.parse('{{ questions | safe }}');
+      var preview_handler = () => {
+        var str = '';
+        $('#preview').html(
+          Array.from(
+            $("#id_questions option:selected").map(
+              (i, x) => questions[x.value].replace(new RegExp('\n', 'g'), '<br/>')
+            )
+          ).join('<br/>') || '[Please choose the questions for this rubric]'
+        );
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+      }
+      $('#id_questions').change(preview_handler);
+      preview_handler();
+      document.add_item = (value, text) => { questions[value] = text; };
+    });
+  </script>
+{% endblock %}

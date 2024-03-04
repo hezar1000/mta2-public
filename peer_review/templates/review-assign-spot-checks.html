@@ -1,0 +1,26 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+{% load field_utils %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+
+            <div class="page-header">
+                <h2>Assign TA {{ model_name }}s for assignment {{ assignment.name }}</h2>
+            </div>
+
+            <form method="post" action="{{ request.path }}">
+                
+                {% form_default_fields form %}
+
+                <button type="submit" class="btn btn-primary">Assign TA {{ model_name }}s</button>
+                <a class="btn btn-success" href="{% url 'review:upload_spot_checks' assignment.id %}"><span class="glyphicon glyphicon-plus"></span> Upload TA reviews</a>
+                <a class="btn btn-primary" href="{% url 'review:upload_spot_checking_priorities' assignment.id %}"><span class="glyphicon glyphicon-plus"></span> Upload Spot-Checking Priorities</a>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

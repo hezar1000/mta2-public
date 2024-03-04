@@ -1,0 +1,153 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<script type="text/html" id="form-template">
+  <div id="item-__prefix__">
+
+    <h3>Add a choice to this question.</h3>
+
+    {% for field in mcitem_formset.empty_form.visible_fields %}
+      <div class="form-group row">
+          <div class="col-md-2 col-form-label">
+              {{ field.label_tag }} 
+          </div>
+          <div class="col-md-3">
+              {{ field }}
+          </div>
+          <div class="col-md-6">
+            {{ field.help_text }}
+          </div>
+      </div>
+    {% endfor %}
+
+  </div>
+</script>
+
+<script>
+$(document).ready(function() {
+
+    var selected = $('#id_category').val()
+    if (selected == "MULT") {
+        $('#formset-container').show()
+        $('#div_button').show()
+    } else if (selected == "TEXT") {
+        $('#formset-container').hide()
+        $('#div_button').hide()
+    } else if (selected == "FILE") {
+        $('#formset-container').hide()
+        $('#div_button').hide()
+    }
+
+    $('#id_category').change(function(ev) {
+      var selected = $(this).val()
+      if (selected == "NONE") {
+        $('#formset-container').hide()
+        $('#div_button').hide()
+      } else if (selected == 'MULT') {
+        $('#formset-container').show()
+        $('#div_button').show()
+      } else if (selected == "TEXT") {
+        $('#formset-container').hide()
+        $('#div_button').hide()
+      } else if (selected == "FILE") {
+        $('#formset-container').hide()
+        $('#div_button').hide()
+      }
+
+    });
+
+
+    $('.add-item').click(function(ev) {
+        ev.preventDefault();
+
+        var count = $('#formset-container').children().length;
+        var tmplMarkup = $('#form-template').html();
+        var compiledTmpl = tmplMarkup.replace(/__prefix__/g, count);
+        $('div#formset-container').append(compiledTmpl);
+
+        // update form count
+        $('#id_assignmentquestionmultiplechoice_set-TOTAL_FORMS').attr('value', count+1);
+
+        // some animate to scroll to view our new form
+        $('html, body').animate({
+                scrollTop: $("#add-item-button").position().top-200
+            }, 800);
+    });
+});
+</script>
+
+<div class="container-fluid">
+
+  <div class="page-header">
+    <h2>Edit this assignment question</h2>
+  </div>
+
+    <form method="post" action="/assignment/question/{{ question.id }}/edit/">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-warning">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      {% for field in form %}
+          <div class="form-group row">
+              <div class="col-md-2 col-form-label">
+                  {{ field.label_tag }} 
+              </div>
+              <div class="col-md-3">
+                  {{ field }}
+              </div>
+              <div class="col-md-6">
+                {{ field.help_text }}
+              </div>
+          </div>
+      {% endfor %}
+
+      {{ mcitem_formset.management_form }}
+
+      <div id="formset-container">
+
+        {% for form in mcitem_formset %}
+
+          <div id="item-{{ forloop.counter0 }}">
+
+          <h3>Add a choice to this question.</h3>
+
+            {% for field in form.hidden_fields %}
+              {{ field }}
+            {% endfor %}
+
+            {% for field in form.visible_fields %}
+
+              <div class="form-group row">
+                  <div class="col-md-2 col-form-label">
+                      {{ field.label_tag }} 
+                  </div>
+                  <div class="col-md-3">
+                      {{ field }}
+                  </div>
+                  <div class="col-md-6">
+                    {{ field.help_text }}
+                  </div>
+              </div>
+            {% endfor %}
+
+          </div>
+
+        {% endfor %}
+
+      </div>
+
+      <div id="div_button" style="margin-bottom:20px;">
+        <a href="#" id="add-item-button" class="btn btn-info add-item" >Add a choice</a>
+      </div>
+
+
+      <button type="submit" class="btn btn-primary">Save this assignment question</button>
+    </form>
+
+</div>
+{% endblock %}

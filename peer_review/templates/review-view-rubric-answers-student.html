@@ -1,0 +1,37 @@
+<div class="review-view">
+    <h4>The review:</h4>
+    <div class="mathjax">
+        {% for content in data %}
+            <div><b>Rubric question:</b> {{ content.question }}</div>
+            
+                <div >
+                    <b>Answer:</b> {{ content.answer }}
+                    <small class="pale-text">
+                            <!-- ({%  widthratio content.grade content.max_grade 100 %} point{{ content.grade | pluralize }} out of {%  widthratio content.max_grade content.max_grade 100 %}) -->
+                            <!-- ({%  widthratio content.grade content.max_grade 100 %}&#37) -->
+                            ({{content.grade}} point{{ content.grade | pluralize }}) 
+
+                    </small>
+
+                    <div id="{{content.content_obj.id}}+" >  <button class="btn btn-primary" id="{{content.content_obj.id}}"> Show reason </button> </div>  
+
+
+                    
+                    <script type="text/javascript">
+                        var btn= document.getElementById("{{content.content_obj.id}}") 
+                        btn.addEventListener("click", function() {
+                        var content= document.getElementById("{{content.content_obj.id}}+")
+                        content.innerHTML =   "Reason: {{ content.reason | linebreaksbr }}"
+                        $.ajax({
+                            url: '/review/view/reason_viewed/{{content.content_obj.id}}',
+                            method : 'GET',
+                         }); 
+                        });
+                     </script>
+
+                </div>
+
+            <h2></h2>
+        {% endfor %}
+    </div>
+</div>

@@ -1,0 +1,38 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+  <div class="page-header">
+    <h2>Request one random submission to review</h2>
+  </div>
+
+    <form method="post" action="/review/{{ cid }}/request/">
+        {% csrf_token %}
+
+        <div class="form-group row">
+            <label for="id_assignment" class="col-md-2 col-form-label">Assignment:</label> 
+
+            <div class="col-md-3">
+                <select name="assignment" required class="form-control" id="id_assignment">
+                    <option value="" selected>---------</option>
+                    {% for assignment_with_reviews in assignments %}
+
+                        <option value="{{ assignment_with_reviews.assignment.id }}">
+                            {{ assignment_with_reviews }}
+                        </option>
+
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Request one random submission to review</button>
+    </form>
+
+</div>
+
+
+
+{% endblock %}

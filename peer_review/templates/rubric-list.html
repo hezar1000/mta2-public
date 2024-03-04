@@ -1,0 +1,85 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+{% load review_assignment_exists %}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-6 col-md-offset-1 col-md-10">
+
+      <div class="page-header mta-header-with-btn" style="margin-top:0">
+        <h2>Rubrics</h2>
+
+        <div class="btn-group mta-btn-group-title">
+            <a class="btn btn-success" href="{% url 'review:rubric_create' %}">
+              <span class="glyphicon glyphicon-plus"></span> Rubric
+            </a>
+            <a class="btn btn-default bg-grey" href="{% url 'review:rubric_question_list' %}">
+              Existing questions
+            </a>
+        </div>
+      </div>
+
+
+      <div style="margin-top:20px;">
+
+        <table class="table table-striped table-bordered"> 
+          <thead>
+            <tr>
+              <th class="col-md-2">Name</th>
+              <th class="col-md-8">Questions</th>
+              <th class="col-md-2">Options</th> 
+            </tr> 
+          </thead> 
+
+          <tbody> 
+            {% for rubric in rubrics %}
+
+              <tr class="mathjax">
+                <td>
+                  {{ rubric.name }}
+                </td>    
+                <td>
+                  <div>
+                      {% for question in rubric.questions.all|dictsort:"title"  %}
+                          <strong>{{ question.title }}:</strong> {{ question.text }}<br/>
+                      {% endfor %}
+                  </div>
+
+                </td>
+                <td>
+                  <a class="btn btn-primary" href="{% url 'review:rubric_edit' rubric.id %}"
+                    data-toggle="tooltip" title="Edit">
+                    <span class="glyphicon glyphicon-pencil"></span>
+                  </a>
+
+                  <a class="btn btn-warning" href="{% url 'review:rubric_duplicate' rubric.id %}"
+                    data-toggle="tooltip" title="Duplicate">
+                    <span class="glyphicon glyphicon-duplicate"></span>
+                  </a>
+
+                  {% if not rubric|review_assignment_exists %}  
+                    <a class="btn btn-primary btn-danger"
+                      href="{% url 'review:rubric_delete' rubric.id %}"
+                      data-toggle="confirmation">
+                      <span class="glyphicon glyphicon-trash"></span>
+                    </a>
+                  {% endif %}
+
+                </td>
+
+              </tr>
+
+            {% endfor %}
+          </tbody> 
+
+        </table>
+
+      </div>
+  
+    </div>
+  </div>
+</div>
+
+{% endblock %}

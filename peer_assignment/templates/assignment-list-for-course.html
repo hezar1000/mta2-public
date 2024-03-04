@@ -1,0 +1,497 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+{% load has_my_submission %}
+{% load get_my_submission %}
+{% load submission_status %}
+{% load get_function_result %}
+{% load submission_button %}
+
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-sm-6 col-md-offset-2 col-md-8">
+      {% if not is_student %}
+      <div class="btn-group mta-btn-group-title">
+        <a class="btn btn-success" href="{% url 'assignment:create' %}">
+          <span class="glyphicon glyphicon-plus"></span> Assignment
+        </a>
+      </div>
+      {% endif %}
+      <div class="panel panel-default">
+        <!-- <div class="panel-body"> -->
+        <!-- <a class="btn btn-link" href="{% url 'assignment:create' %}">Create a new assignment</a>   -->
+        <!-- <a class="btn btn-link" href="/assignment/question/list/">Show existing assignment questions</a>   -->
+        <!-- </div> -->
+        {% if not assignments or assignments|length == 0 %}
+        <div class="panel-body">
+          <div class="well">No assignment yet.</div>
+        </div>
+        {% endif %}
+        <!--
+        {% if is_student %}
+            {% for assignment in assignments_pending %}
+            <tr class="bg-danger">
+              <td>
+                <a href="/assignment/{{ assignment.id }}/view/">
+                  <h5>Assignment <strong>{{ assignment.deadline  }}</strong></h5>
+                </a>
+              </td>
+              <td>
+                <h5><strong>{{ assignment.deadline }}</strong></h5>
+              </td>
+              <td>
+                <a class="btn btn-link" href="/assignment/{{ assignment.id }}/submission/create/">
+                  Create a submission
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        -->
+
+        {% if not assignments or assignments|length == 0 %}
+        {% else %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="col-md-2" style="padding-left: 20px">Assignments (with file upload)</th>
+              <th class="col-md-2">Deadline</th>
+              {% if is_student %}
+              <th class="col-md-4">My submission</th>
+              <th class="col-md-3">Score</th>
+              {% elif is_ta %}
+              <th class="col-md-2">Visible?</th>
+              <th>Submission(s)</th>
+              {% elif is_instructor %}
+              <th class="col-md-2">Review</th>
+              <th class="col-md-2">Deadline</th>
+              <th class="col-md-2">Evaluation</th>
+              <th class="col-md-2">Visible?</th>
+              <th>Submission(s)</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for assignment in assignments %}
+                {% if assignment.assignment_type == 'pdf' %}
+              {% if is_student %}
+                {% has_my_submission assignment request.user as my_submission_exists %}
+                {% get_my_submission assignment request.user as my_submission %}
+                {% if not my_submission_exists and assignment.deadline_passed %}
+                  <tr class="bg-danger">
+                {% elif my_submission_exists %}
+                  <tr class="bg-success">
+                {% elif not my_submission_exists and not assignment.deadline_passed %}
+                  <tr class="bg-warning">
+                {% endif %}
+              {% endif %}
+                {% if not is_student %}
+                <tr class="bg-success">
+                {% endif %}
+              <td scope="row">
+                <a class="btn btn-link" href="/assignment/{{ assignment.id }}/view/">
+                  <h5><strong>{{ assignment.name }}</strong></h5>
+                </a>
+              </td>
+              <td>
+                <h5>
+                  {% if assignment.deadline is None %}
+                  <i>[No Deadline]</i>
+                  {% elif not assignment.deadline_passed %}
+                  {{ assignment.deadline }}
+                  {% else %}
+                  {{ assignment.deadline }} (passed)
+                  {% endif %}
+                </h5>
+              </td>
+              {% if is_student %}
+              {% if not assignment.submission_required %}
+              <td style="vertical-align: middle">
+                <a href="/assignment/{{ assignment.id }}/view/">
+                  View (no submissoin required)
+                </a>
+              </td>
+              {% elif my_submission_exists %}
+              <td style="vertical-align: middle">
+                <a href="/assignment/submission/{{ my_submission.id }}/view/">
+                  View
+                </a>
+                {% if my_submission.can_compose_submission %}
+                /
+                {% submission_edit_button my_submission %}
+                {% endif %}
+              </td>
+              {% else %}
+              <td>
+                {% get_function_result assignment 'can_compose_submission' my_course_member as can_compose_submission %}
+                {% if can_compose_submission %}
+                {% submission_create_button assignment '' 'Create a submission' %}
+                {% else %}
+                <h5>Submission incomplete</h5>
+                {% endif %}
+              </td>
+              {% endif %}
+              <td style="vertical-align: middle">
+                {% submission_status my_submission %}
+              </td>
+              {% else %}
+              {% if is_instructor %}
+              <td>
+                <a class="btn" style="padding:0" href="{% url 'review:manage_settings' assignment.id %}">
+                  <span class="glyphicon glyphicon-wrench"></span> Config
+                </a>
+              </td>
+              <td>
+                  {% if assignment.get_review_settings.student_review_deadline_default is None %}
+                   [No deadline]
+                  {% else %}
+                  Student: <i>{{assignment.get_review_settings.student_review_deadline_default}} </i> </br>
+                    TA: <i>{{assignment.get_review_settings.ta_review_deadline_default}} </i>
+                  
+                  {% endif %}
+              </td>
+              <td>
+                <a class="btn" {% if assignment.assignmentwithreviews %}
+                  href="{% url 'evaluation:manage_settings' assignment.id %}" {% else %} data-toggle="tooltip"
+                  title="Configure review settings first" disabled {% endif %} style="padding:0">
+                  <span class="glyphicon glyphicon-cog"></span> Config
+                </a>
+              </td>
+              <td>
+                {% if assignment.browsable %}
+                <h5>Yes <a class="btn btn-xs" href="/assignment/{{ assignment.id }}/hide/"
+                    data-toggle="confirmation">(Hide)</a></h5>
+                {% else %}
+                <h5>No <a class="btn btn-xs" href="/assignment/{{ assignment.id }}/show/"
+                    data-toggle="confirmation">(Show)</a></h5>
+                {% endif %}
+              </td>
+              {% else %}
+              <td>
+                {% if assignment.browsable %}
+                <h5>Yes</h5>
+                {% else %}
+                <h5>No</h5>
+                {% endif %}
+              </td>
+              {% endif %}
+              <td>
+                <h5>
+                  {% if assignment.assignmentsubmission_set.exists %}
+                  <a href="{% url 'review:assignment_review_list' assignment.id %}">
+                    Display List
+                  </a>
+                  {% elif not assignment.submission_required %}
+                  [Not Required]
+                  {% else %}
+                  <small>[None received]</small>
+                  {% endif %}
+                </h5>
+              </td>
+              {% endif %}
+            </tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+         <table class="table">
+          <thead>
+            <tr>
+              <th class="col-md-2" style="padding-left: 20px">Essays</th>
+              <th class="col-md-2">Deadline</th>
+              {% if is_student %}
+              <th class="col-md-4">My submission</th>
+              <th class="col-md-3">Score</th>
+              {% elif is_ta %}
+              <th class="col-md-2">Visible?</th>
+              <th>Submission(s)</th>
+              {% elif is_instructor %}
+              <th class="col-md-2">Review</th>
+              <th class="col-md-2">Deadline</th>
+              <th class="col-md-2">Evaluation</th>
+              <th class="col-md-2">Visible?</th>
+              <th>Submission(s)</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for assignment in assignments %}
+                {% if assignment.assignment_type == 'text' %}
+              {% if is_student %}
+                {% has_my_submission assignment request.user as my_submission_exists %}
+                {% get_my_submission assignment request.user as my_submission %}
+
+                {% if not my_submission_exists and assignment.deadline_passed %}
+                  <tr class="bg-danger">
+                {% elif my_submission_exists %}
+                  <tr class="bg-success">
+                {% elif not my_submission_exists and not assignment.deadline_passed %}
+                  <tr class="bg-warning">
+                {% endif %}
+              {% endif %}
+                {% if not is_student %}
+                <tr class="bg-success">
+                {% endif %}
+              <td scope="row">
+                <a class="btn btn-link" href="/assignment/{{ assignment.id }}/view/">
+                  <h5><strong>{{ assignment.name }}</strong></h5>
+                </a>
+              </td>
+              <td>
+                <h5>
+                  {% if assignment.deadline is None %}
+                  <i>[No Deadline]</i>
+                  {% elif not assignment.deadline_passed %}
+                  {{ assignment.deadline }}
+                  {% else %}
+                  {{ assignment.deadline }} (passed)
+                  {% endif %}
+                </h5>
+              </td>
+              {% if is_student %}
+              {% if not assignment.submission_required %}
+              <td style="vertical-align: middle">
+                <a href="/assignment/{{ assignment.id }}/view/">
+                  View (no submissoin required)
+                </a>
+              </td>
+              {% elif my_submission_exists %}
+              <td style="vertical-align: middle">
+                <a href="/assignment/submission/{{ my_submission.id }}/view/">
+                  View
+                </a>
+                {% if my_submission.can_compose_submission %}
+                /
+                {% submission_edit_button my_submission %}
+                {% endif %}
+              </td>
+              {% else %}
+              <td>
+                {% get_function_result assignment 'can_compose_submission' my_course_member as can_compose_submission %}
+                {% if can_compose_submission %}
+                {% submission_create_button assignment '' 'Create a submission' %}
+                {% else %}
+                <h5>Submission incomplete</h5>
+                {% endif %}
+              </td>
+              {% endif %}
+              <td style="vertical-align: middle">
+                {% submission_status my_submission %}
+              </td>
+              {% else %}
+              {% if is_instructor %}
+              <td>
+                <a class="btn" style="padding:0" href="{% url 'review:manage_settings' assignment.id %}">
+                  <span class="glyphicon glyphicon-wrench"></span> Config
+                </a>
+              </td>
+              <td>
+                  {% if assignment.get_review_settings.student_review_deadline_default is None %}
+                   [No deadline]
+                  {% else %}
+                  Student: <i>{{assignment.get_review_settings.student_review_deadline_default}} </i> </br>
+                    TA: <i>{{assignment.get_review_settings.ta_review_deadline_default}} </i>
+                  
+                  {% endif %}
+              </td>
+              <td>
+                <a class="btn" {% if assignment.assignmentwithreviews %}
+                  href="{% url 'evaluation:manage_settings' assignment.id %}" {% else %} data-toggle="tooltip"
+                  title="Configure review settings first" disabled {% endif %} style="padding:0">
+                  <span class="glyphicon glyphicon-cog"></span> Config
+                </a>
+              </td>
+              <td>
+                {% if assignment.browsable %}
+                <h5>Yes <a class="btn btn-xs" href="/assignment/{{ assignment.id }}/hide/"
+                    data-toggle="confirmation">(Hide)</a></h5>
+                {% else %}
+                <h5>No <a class="btn btn-xs" href="/assignment/{{ assignment.id }}/show/"
+                    data-toggle="confirmation">(Show)</a></h5>
+                {% endif %}
+              </td>
+              {% else %}
+              <td>
+                {% if assignment.browsable %}
+                <h5>Yes</h5>
+                {% else %}
+                <h5>No</h5>
+                {% endif %}
+              </td>
+              {% endif %}
+              <td>
+                <h5>
+                  {% if assignment.assignmentsubmission_set.exists %}
+                  <a href="{% url 'review:assignment_review_list' assignment.id %}">
+                    Display List
+                  </a>
+                  {% elif not assignment.submission_required %}
+                  [Not Required]
+                  {% else %}
+                  <small>[None received]</small>
+                  {% endif %}
+                </h5>
+              </td>
+              {% endif %}
+            </tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="col-md-2" style="padding-left: 20px">Quiz</th>
+              <th class="col-md-2">Deadline</th>
+              {% if is_student %}
+              <th class="col-md-4">My submission</th>
+              <th class="col-md-3">Score</th>
+              {% elif is_ta %}
+              <th class="col-md-2">Visible?</th>
+              <th>Submission(s)</th>
+              {% elif is_instructor %}
+              <th class="col-md-2">Review</th>
+              <th class="col-md-2">Deadline</th>
+              <th class="col-md-2">Evaluation</th>
+              <th class="col-md-2">Visible?</th>
+              <th>Submission(s)</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for assignment in assignments %}
+                {% if assignment.assignment_type == 'quiz' %}
+              {% if is_student %}
+                {% has_my_submission assignment request.user as my_submission_exists %}
+                {% get_my_submission assignment request.user as my_submission %}
+                {% if not my_submission_exists and assignment.deadline_passed %}
+                  <tr class="bg-danger">
+                {% elif my_submission_exists %}
+                  <tr class="bg-success">
+                {% elif not my_submission_exists and not assignment.deadline_passed %}
+                  <tr class="bg-warning">
+                {% endif %}
+              {% endif %}
+                {% if not is_student %}
+                <tr class="bg-success">
+                {% endif %}
+              <td scope="row">
+                <a class="btn btn-link" href="/assignment/{{ assignment.id }}/view/">
+                  <h5><strong>{{ assignment.name }}</strong></h5>
+                </a>
+              </td>
+              <td>
+                <h5>
+                  {% if assignment.deadline is None %}
+                  <i>[No Deadline]</i>
+                  {% elif not assignment.deadline_passed %}
+                  {{ assignment.deadline }}
+                  {% else %}
+                  {{ assignment.deadline }} (passed)
+                  {% endif %}
+                </h5>
+              </td>
+              {% if is_student %}
+              {% if not assignment.submission_required %}
+              <td style="vertical-align: middle">
+                <a href="/assignment/{{ assignment.id }}/view/">
+                  View (no submissoin required)
+                </a>
+              </td>
+              {% elif my_submission_exists %}
+              <td style="vertical-align: middle">
+                <a href="/assignment/submission/{{ my_submission.id }}/view/">
+                  View
+                </a>
+                {% if my_submission.can_compose_submission %}
+                /
+                {% submission_edit_button my_submission %}
+                {% endif %}
+              </td>
+              {% else %}
+              <td>
+                {% get_function_result assignment 'can_compose_submission' my_course_member as can_compose_submission %}
+                {% if can_compose_submission %}
+                {% submission_create_button assignment '' 'Create a submission' %}
+                {% else %}
+                <h5>Submission incomplete</h5>
+                {% endif %}
+              </td>
+              {% endif %}
+              <td style="vertical-align: middle">
+                {% submission_status my_submission %}
+              </td>
+              {% else %}
+              {% if is_instructor %}
+              <td>
+                <a class="btn" style="padding:0" href="{% url 'review:manage_settings' assignment.id %}">
+                  <span class="glyphicon glyphicon-wrench"></span> Config
+                </a>
+              </td>
+              <td>
+                  {% if assignment.get_review_settings.student_review_deadline_default is None %}
+                   [No deadline]
+                  {% else %}
+                  Student: <i>{{assignment.get_review_settings.student_review_deadline_default}} </i> </br>
+                    TA: <i>{{assignment.get_review_settings.ta_review_deadline_default}} </i>
+                  
+                  {% endif %}
+              </td>
+              <td>
+                <a class="btn" {% if assignment.assignmentwithreviews %}
+                  href="{% url 'evaluation:manage_settings' assignment.id %}" {% else %} data-toggle="tooltip"
+                  title="Configure review settings first" disabled {% endif %} style="padding:0">
+                  <span class="glyphicon glyphicon-cog"></span> Config
+                </a>
+              </td>
+              <td>
+                {% if assignment.browsable %}
+                <h5>Yes <a class="btn btn-xs" href="/assignment/{{ assignment.id }}/hide/"
+                    data-toggle="confirmation">(Hide)</a></h5>
+                {% else %}
+                <h5>No <a class="btn btn-xs" href="/assignment/{{ assignment.id }}/show/"
+                    data-toggle="confirmation">(Show)</a></h5>
+                {% endif %}
+              </td>
+              {% else %}
+              <td>
+                {% if assignment.browsable %}
+                <h5>Yes</h5>
+                {% else %}
+                <h5>No</h5>
+                {% endif %}
+              </td>
+              {% endif %}
+              <td>
+                <h5>
+                  {% if assignment.assignmentsubmission_set.exists %}
+                  <a href="{% url 'review:assignment_review_list' assignment.id %}">
+                    Display List
+                  </a>
+                  {% elif not assignment.submission_required %}
+                  [Not Required]
+                  {% else %}
+                  <small>[None received]</small>
+                  {% endif %}
+                </h5>
+              </td>
+              {% endif %}
+            </tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+{% endblock %}

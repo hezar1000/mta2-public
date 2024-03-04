@@ -1,0 +1,75 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+{% load field_utils %}
+{% load anora %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+
+            <div class="page-header">
+                <h2>{% if is_create %}Create{% else %}Edit{% endif %} {{ model_name | anora }}</h2>
+            </div>
+            <div>
+                {%if model.submission.calibration_id == 0%}
+                <h5>Due on {{ model.deadline }}</h5>
+                {%else%}
+                <!-- <h5>Due on --</h5> -->
+                {%endif%}
+                <h5>Assignment: {{ model.submission.assignment.name }}</h5>
+            </div>
+
+            <form name="reviewform" method="POST" action="{{ request.path }}" enctype="multipart/form-data" onSubmit="updateTimerInForm()">
+                {% csrf_token %}
+
+                {% non_field_errors form %}
+
+                {% for field in form.hidden_fields %}
+                    {{ field }}
+                {% endfor %}
+                
+                <h3>Please read the following submission carefully.</h3>
+                <div>
+                    {% block submission_main %}{% endblock %}
+                </div>
+
+                {% for field in form.visible_fields %}
+                    {% if field.name == 'nopublicuse' %}
+                        <div class="form-group row">
+                            <div class="col-md-12 col-form-label">
+                                {{ field }} {{ field.label_tag }} 
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                <input type="hidden" name="rid" value="{{ model.id }}" />
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" name="submit" value="Submit">Submit</button>
+                </div>
+            </form>
+
+            {% block form_footer %}{% endblock %}
+
+        </div>
+    </div>
+</div>
+
+{% load static %}
+
+<script src={% static 'js/timeme.min.js' %}></script>
+<script type="text/javascript">
+    // Initialize library and start tracking time
+    TimeMe.initialize({
+        currentPageName: "my-home-page", // current page
+        idleTimeoutInSeconds: 30 // seconds
+    });
+
+    function updateTimerInForm() {
+        var timeSpentOnPage = TimeMe.getTimeOnCurrentPageInSeconds();
+        document.getElementsByName('reviewform')[0].timer.value = timeSpentOnPage;
+        return true;
+    }
+</script>
+
+{% endblock %}

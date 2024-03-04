@@ -1,0 +1,56 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-md-10 col-md-offset-2">
+      <h3 class="page-header">Create an assignment</h3>
+      
+      <form method="post" action="/assignment/{{ course.id }}/create/" enctype="multipart/form-data">
+        
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-warning">
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        {% for field in fields %}
+        <div class="form-group row">
+            <div class="col-md-2 col-form-label">
+                {{ field.label_tag }} 
+            </div>
+            <div class="col-md-3">
+                {{ field }}
+            </div>
+            <div class="col-md-6">
+              {{ field.help_text }}
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="form-group row">
+            <label for="id_filefield" class="col-md-2 col-form-label">Files: </label>
+            <div class="col-md-3">
+                <input id="id_filefield" class="form-control" type="file" name="files" multiple>
+            </div>
+        </div>
+        <input class="btn btn-primary" type="submit" value="Create the assignment" />
+        <a class="btn btn-info" href="/assignment/question/create/">Add a new question</a>
+      </form>
+      
+      <br />
+      
+      <div class="input-group">
+        <a class="btn btn-default" href="/assignment/list_for_course/">
+          Return to the list of assignments
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

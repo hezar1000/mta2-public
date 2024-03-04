@@ -1,0 +1,433 @@
+{% extends "form_simp_base.html" %}
+{% load static %}
+
+{% block extra_js %}
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+{% endblock %}
+{% block update_course %}{% endblock %}
+{% block content %}
+    <div class="panel-heading">
+        <h3>{% if is_create %}Create an assignment{% else %}Edit assignment <b>{{ data.name }}</b>{% endif %}<small>&nbsp; for Course {{ course.displayname }}</small></h3>
+    </div>
+
+    <div class="container-fluid">
+        <div id="form">
+            {% csrf_token %}
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        var form = document.getElementById('form');
+        var csrf_token = form.children[0];
+        let updateMarkdown = () => {
+            $("#form.formio-form textarea").each((i, e) => {
+                var simplemde = new SimpleMDE({
+                    element: e,
+                    forceSync: true,
+                });
+                simplemde.codemirror.on('change', () => {
+                    formio.data.questions[i].description = simplemde.value()
+                })
+            });
+        }
+        var fixed_text_form = false;
+        var formio = null;
+        Formio.createForm(form, {
+            components: [
+                // {
+                //     input: false,
+                //     hidden: true,
+                //     type: 'number',
+                //     key: 'id',
+                //     value: null,
+                // },
+                {
+                    type: 'textfield',
+                    key: 'name',
+                    label: 'Display Name',
+                    placeholder: 'Assignment name',
+                    validate: {required: true},
+                    input: true
+                },
+                {
+                    input: true,
+                    type: 'checkbox',
+                    label: 'Submission Required',
+                    inputType: 'checkbox',
+                    key: 'submission_required',
+                    // validate: {required: true},
+                    tooltip: 'Almost always equals to true, This is only used for notes/calibration assignments.',
+                    defaultValue: true,
+                    // label: 'Grace Hours',
+                },
+                {
+                    type: 'table',
+                    numRows: 1,
+                    numCols: 3,
+                    // header: ['Release Time', 'Deadline'],
+                    conditional: {
+                        show: true,
+                        when: 'submission_required',
+                        eq: true,
+                    },
+                    bordered: true,
+                    input: false,
+                    rows: [
+                        [
+                            { components: [
+                                {
+                                    input: true,
+                                    type: 'datetime',
+                                    key: 'release_time',
+                                    tooltip: 'Use this field to release the assignment automatically at a pre-specified time.',
+                                    label: 'Release Time',
+                                    format: 'yyyy-MM-dd hh:mm a',
+                                    // datepickerMode: 'day',
+                                    enableDate: true,
+                                    enableTime: true,
+                                },
+                            ],},
+                            { components: [
+                                {
+                                    input: true,
+                                    type: 'datetime',
+                                    key: 'deadline',
+                                    label: 'Deadline',
+                                    format: 'yyyy-MM-dd hh:mm a',
+                                    // datepickerMode: 'day',
+                                    enableDate: true,
+                                    enableTime: true,
+                                },
+                            ],},
+                            { components: [
+                                {
+                                    input: true,
+                                    type: 'number',
+                                    label: 'Max Late Units',
+                                    tooltip: 'Maximum late units (days) for a submission',
+                                    key: 'max_late_units',
+                                    defaultValue: '0',
+                                    validate: {required: true},
+                                },
+                            ],},
+                            { components: [
+                                {
+                                    input: true,
+                                    type: 'number',
+                                    label: 'Grace Hours',
+                                    tooltip: 'Defines a grace period in which no late hours are deducted.',
+                                    key: 'grace_hours',
+                                    defaultValue: '1',
+                                    validate: {required: true},
+                                },
+                            ],},
+                            { components: [
+                                {
+                                    input: true,
+                                    type: 'number',
+                                    label: 'Qualification Grade',
+                                    tooltip: 'The grade above which students will be qualified',
+                                    key: 'qualification_grade',
+                                    defaultValue: '10000',
+                                    validate: {required: true},
+                                    
+                                },
+                            ],},
+                        ],
+                    ],
+                },
+                {
+                    input: true,
+                    // TODO: remove when we add free-form
+                    // hidden: true,
+                    type: 'radio',
+                    inputType: 'radio',
+                    key: 'assignment_type',
+                    label: 'Assignment Statement Type',
+                    tooltip: 'In free-form, you need to specify the questions, but in PDF-mode, you need to upload the problem statement as a PDF.',
+                    validate: {required: true},
+                    defaultValue: 'pdf',
+                    values: [
+                        {
+                            label: 'PDF',
+                            value: 'pdf',
+                        },
+                        {
+                            label: 'Quiz',
+                            value: 'quiz',
+                        },
+                        {
+                            label: 'Text',
+                            value: 'text',
+                        },
+                    ],
+                },
+                {
+                    type: 'table',
+                    numRows: 1,
+                    numCols: 2,
+                    // header: ['Problem Statement', 'Number of Questions'],
+                    bordered: true,
+                    input: false,
+                    conditional: {
+                        show: true,
+                        when: 'assignment_type',
+                        eq: 'pdf',
+                    },
+                    rows: [
+                        [
+                            { components: [
+                                {
+                                    input: true,
+                                    type: 'file',
+                                    noupload: true,
+                                    label: 'Statement PDF',
+                                    tooltip: 'Only PDF files are allowed',
+                                    key: 'statement',
+                                    filePattern: '*.pdf',
+                                    storage: 'test',
+                                    multiple: false,
+                                    validate: {required: true},
+                                },
+                            ]},
+                            { components: [
+                                {
+                                    input: true,
+                                    type: 'number',
+                                    label: 'Number of questions',
+                                    tooltip: 'We need this to know how many questions to expect from students and so on',
+                                    key: 'num_questions',
+                                    validate: {required: true},
+                                    conditional: {
+                                        show: true,
+                                        when: 'assignment_type',
+                                        eq: 'pdf',
+                                    },
+                                },
+                            ]},
+                        ],
+                    ]
+                },
+                /// Free-form Assignment type (unused for now)
+                // {
+                //     input: true,
+                //     type: 'datagrid',
+                //     label: 'Questions',
+                //     key: 'questions',
+                //     validate: {
+                //         minLength: 1,
+                //     },
+                //     conditional: {
+                //         show: true,
+                //         when: 'assignment_type',
+                //         eq: 'form',
+                //     },
+                //     components: [
+                //         {
+                //             type: 'panel',
+                //             components: [
+                //                 {
+                //                     input: true,
+                //                     type: 'textfield',
+                //                     key: 'question',
+                //                     label: 'Question',
+                //                     validate: {required: true},
+                //                 },
+                //                 {
+                //                     input: true,
+                //                     multiple: true,
+                //                     type: 'textfield',
+                //                     key: 'choice',
+                //                     label: 'Choice',
+                //                     validate: {required: true},
+                //                 },
+                //             ],
+                //         },
+                //     ],
+                // },
+                /// Text & Quiz Assignment type
+                {
+                    input: true,
+                    type: 'datagrid',
+                    // IMPORTANT: changing this key requires a lot of modifications in other parts of the code
+                    key: 'questions',
+                    validate: {
+                        minLength: 1,
+                    },
+                    conditional: {
+                        json: {
+                            'or': [
+                                {
+                                    '===': [
+                                        {
+                                            var: 'data.assignment_type',
+                                        },
+                                        'text',
+                                    ]
+                                },
+                                {
+                                    '===': [
+                                        {
+                                            var: 'data.assignment_type',
+                                        },
+                                        'quiz',
+                                    ]
+                                },
+                            ]
+                        }
+                    },
+                    addAnotherPostHook: updateMarkdown,
+                    removePostHook: updateMarkdown,
+                    addAnother: 'Add Another Question',
+                    components: [
+                        {
+                            type: 'panel',
+                            label: 'Questions',
+                            components: [
+                                {
+                                    input: true,
+                                    hidden: true,
+                                    type: 'textfield',
+                                    key: 'pk',
+                                    defaultValue: null,
+                                },
+                                {
+                                    input: true,
+                                    type: 'textfield',
+                                    key: 'title',
+                                    label: 'Title',
+                                    validate: {required: true},
+                                },
+                                {
+                                    input: true,
+                                    type: 'textarea',
+                                    key: 'description',
+                                    label: 'Description',
+                                    validate: {required: true},
+                                    customClass: 'no-margin-bottom',
+                                },
+                                {
+                                    type: 'datagrid',
+                                    key: 'choices',
+                                    validate: {
+                                        minLength: 2,
+                                    },
+                                    customClass: 'col-md-6 no-border no-margin-bottom no-margin-bottom-child',
+                                    addAnother: 'Add Another Choice',
+                                    label: 'Choices',
+                                    conditional: {
+                                        show: true,
+                                        when: 'assignment_type',
+                                        eq: 'quiz',
+                                    },
+                                    components: [
+                                        {
+                                            input: true,
+                                            hidden: true,
+                                            type: 'textfield',
+                                            key: 'pk',
+                                            defaultValue: null,
+                                        },
+                                        {
+                                            input: true,
+                                            type: 'textfield',
+                                            key: 'choice_text',
+                                            // label: 'Choices',
+                                            // customClass: 'col-md-10',
+                                            required: true,
+                                            // multiple: true,
+                                            prefix: '-',
+                                        },
+                                        {
+                                            input: true,
+                                            type: 'number',
+                                            key: 'marks',
+                                            required: true,
+                                            defaultValue: '0',
+                                            // multiple: true,
+                                            customClass: 'col-md-8',
+                                            prefix: 'Mark:',
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    type: 'button',
+                    action: 'submit',
+                    label: 'Submit',
+                    theme: 'primary'
+                }
+            ],
+        }).then(function(form) {
+        formio = form;
+        
+        formio.on('change', (e) => {
+            if( fixed_text_form == false &&
+                e.changed.component.key == 'assignment_type' &&
+                ( e.data.assignment_type == 'text' || e.data.assignment_type == 'quiz' )
+            ) {
+                fixed_text_form = true;
+                updateMarkdown();
+            }
+        });
+        
+        var data = JSON.parse('{{ data_json | safe }}');
+        if( data['statement'] )
+            data['statement'] = [{name: data['statement'], size: 0, in_server: true}, ];
+        else
+            delete data['statement'];
+
+        formio.submission = {
+            data: data
+        };
+
+        
+        if( data.assignment_type == 'text' || data.assignment_type == 'quiz' ) {
+            fixed_text_form = true;
+            setTimeout(updateMarkdown, 1000);
+        }
+
+        formio.onSubmit = (submission) => {
+            var formData = new FormData();
+            for(var key in submission.data)
+                if( key !== 'undefined' ) {
+                    if( key == 'statement' )
+                        formData.append(key, submission.data[key][0]);
+                    if( key == 'questions' )
+                        formData.append(key, JSON.stringify(submission.data[key]));
+                    else
+                        formData.append(key, submission.data[key]);
+                }
+            formData.append(csrf_token.name, csrf_token.value);
+
+            $.ajax({
+                url: "{{ request.path }}",
+                data: formData,
+                type: 'POST',
+                contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
+                processData: false, // NEEDED, DON'T OMIT THIS
+                success: function(data, status, xhr) {
+                    window.location.replace('{{ redirect_address }}')
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    formio.loading = false;
+                    if( textStatus == "timeout" ) {
+                        formio.setAlert('danger', 'Request timed out! You can try again later.');
+                    }
+                    else if( xhr.status == 400 ) {
+                        formio.setAlert('danger',
+                            'Please fix the following errors before submitting. <br/> <strong style="padding-left:2.7em">'
+                            + Object.values(xhr.responseJSON).join('</strong><br/><strong style="padding-left:2.7em">') + '</strong>');
+                    }
+                    else {
+                        formio.setAlert('danger', 'Server Error Encountered! You might want to <a onClick="location.reload()">reload</a>');
+                    }
+                },
+            });
+        };
+    });
+    </script>
+{% endblock %}

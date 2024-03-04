@@ -1,0 +1,326 @@
+
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+{% load submission_button %}
+{% load submission_status %}
+{% load tag_review_exists %}
+
+<style>
+    .overflow {
+    overflow: hidden;
+    -ms-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    }
+
+    .overflow:hover {
+    overflow: visible;
+    }
+
+    .overflow:hover span {
+    position: relative;
+    background-color: white;
+
+    box-shadow: 0 0 4px 0 black;
+    border-radius: 1px;
+    }
+</style>
+
+<div class='container-fluid'>
+
+    {% load submission_view %}
+
+
+
+    <div class="container-fluid">
+
+        <div class="row">
+
+            <!-- REVIEWS/GRADES -->
+            <div class="col-md-2">
+                    <div class="thumbnail">
+                        <div class="caption">
+                            <h4>Author: </h4>
+                            {% if is_staff %}
+                               <a href="/course/{{sub.author.course.id}}/{{sub.author.user.id}}/" target="">{{ sub.author.user.first_name }} {{ sub.author.user.last_name }}</a>
+                            {% elif is_author %}
+                            {{ sub.author.user.first_name }} {{ sub.author.user.last_name }}
+                            {% else %}
+                            Anonymous
+                            {% endif %}
+                                <h4>Grade:</h4>
+                            {% if show_grade %}
+                                {% submission_status sub %} 
+                                <br/> (Grading method: {{sub.final_grading_method}})
+                            {%else%}
+                            Not available
+                            {% endif %}
+<!--                        
+                            {% if sub.reviewassignment_set.exists %}
+                                <h4>Reviews:</h4>
+
+                                {% for review in sub.reviewassignment_set.all %}
+                                    {% if review.visible == True and is_author%}
+                                        {% if review|tag_review_exists %}
+                                        <div>
+                                            <a href="/review/{{ review.id }}/view/" target="">
+                                                {{ review.grader.display_role }} Review</a>
+                                            (Grade: {%  widthratio review.assigned_grade review.submission.assignment.max_total_grade 100 %}&#37, {%if review.markingload > 2 or review.grader.role == 'ta' or review.grader.role == 'instructor' %} high weight {%elif review.markingload >= 1 and 2 >= review.markingload %} medium weight {%elif review.markingload == 0 %} no weight {%else%} low weight {%endif%} )
+                                        </div>
+                                    {% else %}
+                                        <div>                    
+                                            {{ review.grader.display_role }} review
+                                            {% if review.question %}
+                                                ({{review.question.title}})
+                                            {% endif %}
+                                            unavailable
+                                        </div>
+                                    {% endif %}
+                                    {% elif review.visible == True and not is_author and not is_staff %}
+                                    {% if review|tag_review_exists %}
+                                    <div>
+                                        <a href="/review/{{ review.id }}/view/" target="">
+                                            {{ review.grader.display_role }} Review</a>
+                                        (Grade: {%  widthratio review.assigned_grade review.submission.assignment.max_total_grade 100 %}&#37, {%if review.markingload > 2 or review.grader.role == 'ta' or review.grader.role == 'instructor' %} high weight {%elif review.markingload >= 1 and 2 >= review.markingload %} medium weight {%elif review.markingload == 0 %} no weight {%else%} low weight {%endif%} )
+                                    </div>
+                                    {% else %}
+                                    <div>                    
+                                        {{ review.grader.display_role }} review
+                                        {% if review.question %}
+                                            ({{review.question.title}})
+                                        {% endif %}
+                                        unavailable
+                                    </div>
+                                    {% endif %}
+                                    {%elif review.visible == True and is_staff%}
+                                        {% if review|tag_review_exists %}
+                                            <div>
+                                                <a href="/review/{{ review.id }}/view/" target="">
+                                                    {{ review.grader.user.first_name }} {{ review.grader.user.last_name }}'s Review</a>
+                                                     (Grade: {%  widthratio review.assigned_grade review.submission.assignment.max_total_grade 100 %}&#37, {%if review.markingload > 2 or review.grader.role == 'ta' or review.grader.role == 'instructor' %} high weight {%elif review.markingload >= 1 and 2 >= review.markingload %} medium weight {%elif review.markingload == 0 %} no weight {%else%} low weight {%endif%} )
+                                                </div>
+                                        {% else %}
+                                            <div>                    
+                                                    {{ review.grader.user.first_name }} {{ review.grader.user.last_name }}'s Review
+                                                {% if review.question %}
+                                                    ({{review.question.title}})
+                                                {% endif %}
+                                                unavailable
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %} -->
+                        </div>
+                    </div>
+                
+            </div>
+            <!-- END OF REVIEWS/GRADES -->
+
+            {% if sub.calibration_id == 0 %}
+                <div class="col-sm-6 col-md-offset-0 col-md-8">
+                <h4>Peer Reviews</h4>
+                <div class="panel panel-default"> 
+                <div style="overflow-x: auto;">
+                <table class="table table-striped"> 
+                {% if sub.reviewassignment_set.exists %} 
+                    <thead>
+                        <tr> 
+                            <th class="col-md-1">Reviewer</th>
+                            {%if sub.reviewassignment_set.all.0.reviewcontent_set.exists %}
+                                {% for content in sub.reviewassignment_set.all.0.reviewcontent_set.all|dictsort:"choice.question.title" %}
+                                    {%if not content.choice.question.title == '5. Outline question' and not content.choice.question.title == 'References' %}
+                                        <th class="col-md-1">{{content.choice.question}}</th>
+                                    {%endif%}
+                                {%endfor%}
+                            {%elif sub.reviewassignment_set.all.1.reviewcontent_set.exists %}
+                                {% for content in sub.reviewassignment_set.all.1.reviewcontent_set.all|dictsort:"choice.question.title" %}
+                                    {%if not content.choice.question.title == '5. Outline question' and not content.choice.question.title == 'References' %}
+                                        <th class="col-md-1">{{content.choice.question}}</th>
+                                    {%endif%}                            
+                                {%endfor%}
+                            {%else%}
+                                {% for content in sub.reviewassignment_set.all.2.reviewcontent_set.all|dictsort:"choice.question.title" %}
+                                    {%if not content.choice.question.title == '5. Outline question' and not content.choice.question.title == 'References' %}
+                                        <th class="col-md-1">{{content.choice.question}}</th>
+                                    {%endif%}                            
+                                {%endfor%}
+                            {%endif%}
+                            <th class="col-md-1">Weight</th>
+                        <!-- <th class="col-md-3">Weight</th> -->
+                        </tr> 
+                    </thead>
+              
+                    <tbody> 
+                        {% for review in sub.reviewassignment_set.all %}
+                            {% if review|tag_review_exists and show_reviews %}
+                                <tr>
+                                    {%if review.visible == True and is_author %}
+                                        <td>  <a href="/review/{{ review.id }}/view/" target=""> {{ review.grader.display_role }} Review </a>  </td>
+                                    {%elif review.visible == True and not is_author and not is_staff %}
+                                        <td>   <a href="/review/{{ review.id }}/view/" target=""> {{ review.grader.display_role }} Review  </a> </td>
+                                    {%elif review.visible == True and is_staff%}
+                                        <td>   <a href="/review/{{ review.id }}/view/" target="">{{ review.grader.user.first_name }} {{ review.grader.user.last_name }}'s Review </a> </td>
+                                    {%elif review.visible == False and is_staff%}
+                                        <td>   <a href="/review/{{ review.id }}/view/" target=""> {{ review.grader.user.first_name }} {{ review.grader.user.last_name }}'s Review (Flagged) </a> </td> 
+                                    {%endif%}
+                                    {%if review.visible == True or is_staff %}
+                                        {%for content in review.reviewcontent_set.all|dictsort:"choice.question.title" %}
+                                            {%if not content.choice.question.title == '5. Outline question' and not content.choice.question.title == 'References' %}
+                                                <td>
+                                                    <div>
+                                                        <span class="overflow" style="float: left; width: 50px">
+                                                            <span>{{ content.choice.text }}</span>
+                                                        </span>
+                                                    </div>
+                                                </td> 
+                                            {%endif%}
+                                        {%endfor%}
+                                        {% if show_grade %}
+                                            <td> {{ review.markingload }} </td>
+                                        {%else%}
+                                            <td> -- </td>
+                                        {%endif%}
+                                    {%endif%}
+                                </tr>  
+                            {%endif%}
+                        {%endfor%}
+                        {% if show_grade %}
+                            {% for review in sub.reviewassignment_set.all %}
+                                {% if review|tag_review_exists %}
+                                    <tr>
+                                        {%if review.visible == True and review.grader.role == 'ta' %}
+                                            <td>  <b>Total</b> </td>
+                                        {%endif%}
+                                        {%if review.visible == True and review.grader.role == 'ta' and sub.final_grading_method == 'TA'%}
+                                            {%for content in review.reviewcontent_set.all|dictsort:"choice.question.title" %}
+                                                {%if not content.choice.question.title == '5. Outline question' and not content.choice.question.title == 'References' %}
+                                                <td>
+                                                <div>
+                                                    <span class="overflow" style="float: left; width: 50px">
+                                                        <span><b>{{ content.choice.text }}</b></span>
+                                                    </span>
+                                                </div>
+                                                </td> 
+                                                {%endif%}
+                                            {%endfor%}
+                                        <td> <b>{{ review.markingload }}</b> </td>
+                                        {%endif%}
+
+                                        {%if review.visible == False and review.grader.role == 'instructor' and sub.final_grading_method == 'Peer' %}
+                                            <td>  <b>Total</b> </td>
+                                        {%endif%}
+                                        {%if review.visible == False and review.grader.role == 'instructor' and sub.final_grading_method == 'Peer' %}
+                                            {%for content in review.reviewcontent_set.all|dictsort:"choice.question.title" %}
+                                                {%if not content.choice.question.title == '5. Outline question' and not content.choice.question.title == 'References' %}
+                                                <td>
+                                                <div>
+                                                    <span class="overflow" style="float: left; width: 50px">
+                                                        <span><b>{{ content.choice.text }}</b></span>
+                                                    </span>
+                                                </div>
+                                                </td> 
+                                                {%endif%}
+                                            {%endfor%}
+                                        <td> <b>{{ review.markingload }}</b> </td>
+                                        {%endif%}
+                                    </tr>
+                                {%endif%}
+                            {%endfor%}
+                        {%endif%}  
+                    </tbody> 
+                {%endif%}
+                </table>
+                </div>
+                </div>   
+                </div>
+            {% endif %}
+
+
+            <div class="col-md-8 col-md-offset-0" >
+                <!-- THE SUBMISSION -->
+                {% submission_view request.user sub %}
+
+                {% if is_author and not sub.assignment.submission_required %}
+                    <div style="margin:15px 0 5px 0px">
+                        <a class="btn btn-primary"
+                            href="{% url 'calibration:calibration_assignment_edit' sub.id %}">
+                            Edit Calibration Submission
+                        </a>
+                    </div>
+                {% endif %}
+                {% if is_author and sub.can_compose_submission %}
+                    <div style="margin:15px 0 5px 0px">
+                        {% submission_edit_button sub 'btn btn-primary' %}
+                    </div>
+                {% endif %}
+
+                {% if users_review_of_sub %}
+                    {% if users_review_of_sub.submitted is True %}
+                    <div style="margin:15px 0 5px 0px">
+                        <a class="btn btn-primary"
+                            href="{% url 'review:view' users_review_of_sub.id %}">
+                            View My Review
+                        </a>
+                    </div>
+                    {% else %}
+                        <div style="margin:15px 0 5px 0px">
+                            <a class="btn btn-primary"
+                                href="{% url 'review:create' users_review_of_sub.id %}">
+                                Create My Review
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                {% if can_request_review %}
+                    <div style="margin:15px 0 5px 0px">
+                        <a class="btn btn-warning"
+                            href="{% url 'review:request_review' sub.id %}">
+                            Request Review
+                        </a>
+                    </div>
+                {% endif %}
+
+                <div style="height: 15px"></div>
+
+                {% if user_role == 'instructor' and sub.late_units_used > 0 %}
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab">
+                            <h4 class="panel-title">
+                            <strong>Late day override</strong>
+                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse-late-unit" aria-expanded="true" aria-controls="collapseOne">
+                                Show/Hide
+                            </a>
+                            </h4>
+                        </div>
+                        <div class="panel-body panel-collapse collapse" id="collapse-late-unit">
+                            <p>Manually override the number of late days used for this assignment.</p>
+                            <br/>
+                        
+                            <form method="POST" action="{% url 'assignment:late_unit_override' sub.id %}">
+                                {% csrf_token %}
+
+                                <div class="form-group row">
+                                    <label for="id_member" class="col-md-2 col-form-label">Late days:</label> 
+                                    <div class="col-md-3">
+                                        <input name="late_units_used" type="number" value="{{ sub.late_units_used }}" min="0" max="{{ sub.late_units_used }}" style="max-width:50px"/>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-warning"
+                                    data-toggle="confirmation" data-singleton="true" data-placement="left">
+                                    Override
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+  
+</div>
+
+{% endblock %}

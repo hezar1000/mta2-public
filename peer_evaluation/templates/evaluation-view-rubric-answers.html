@@ -1,0 +1,25 @@
+{% with data=data.review_contents %}
+    {% include 'review-view-rubric-answers.html' %}
+{% endwith %}
+
+<div class="evaluation-view">
+    <h4>The review evaluation:</h4>
+    <div class="mathjax">
+        {% for content in data.evaluation_contents %}
+            <div>
+                Question: {{ content.question }}
+            </div>
+            
+            <div>
+                <b>Answer:</b> {{ content.answer }}
+                <small class="pale-text">
+                    ({{ content.grade }} point{{ content.grade | pluralize }} out of {{ content.max_grade }})
+                </small>
+                <br/>
+                Reason: {{ content.reason | linebreaks }}
+            </div>
+
+            <h2></h2>
+        {% endfor %}
+    </div>
+</div>

@@ -1,0 +1,134 @@
+{% extends "form_simp_base.html" %}
+
+{% block extra_js %}
+  {% load static %}
+  <script src="{% static 'js/jquery-file-upload/jquery.ui.widget.js' %}"></script>
+  <script src="{% static 'js/jquery-file-upload/jquery.iframe-transport.js' %}"></script>
+  <script src="{% static 'js/jquery-file-upload/jquery.fileupload.js' %}"></script>
+
+  <script>
+    // Initial Source: https://simpleisbetterthancomplex.com/tutorial/2016/11/22/django-multiple-file-upload-using-ajax.html
+    $(function () {
+        /* 1. OPEN THE FILE EXPLORER WINDOW */
+        $(".js-upload-photos").click(function () {
+          $("#fileupload").click();
+        });
+      
+        /* 2. INITIALIZE THE FILE UPLOAD COMPONENT */
+        $("#fileupload").fileupload({
+          dataType: 'json',
+          formData: {"csrfmiddlewaretoken": "{{ csrf_token }}"},
+          sequentialUploads: true,  /* 1. SEND THE FILES ONE BY ONE */
+          start: function (e) {  /* 2. WHEN THE UPLOADING PROCESS STARTS, SHOW THE MODAL */
+            $("#modal-progress").modal("show");
+          },
+          stop: function (e) {  /* 3. WHEN THE UPLOADING PROCESS FINALIZE, HIDE THE MODAL */
+            $("#modal-progress").modal("hide");
+          },
+          error: function (e) {
+            console.log(e.responseText)
+          },
+          progressall: function (e, data) {  /* 4. UPDATE THE PROGRESS BAR */
+            var progress = parseInt(data.loaded / data.total * 100, 10);
+            var strProgress = progress + "%";
+            $(".progress-bar").css({"width": strProgress});
+            $(".progress-bar").text(strProgress);
+          },
+          done: function (e, data) {  /* 3. PROCESS THE RESPONSE FROM THE SERVER */
+            if (data.result.is_valid) {
+              $("#gallery tbody").prepend(
+                  "<tr><td><a href='" + data.result.url + "'>" + data.result.username + "</a></td></tr>"
+              )
+            }
+            else {
+              for(var i=0; i<data.result.errors.length; i++) {
+                $("#error-messages").prepend(
+                  '<div class="alert alert-danger" role="alert">'
+                  + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'
+                  + '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>'
+                  + '&nbsp;'
+                  + data.result.errors
+                  + '</div>'
+                )
+              }
+            }
+          }
+        });
+      
+      });
+    </script>
+{% endblock %}
+
+{% block extra_style %}
+{% endblock %}
+
+{% block content %}
+{% load view_file field_utils %}
+
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <h3 class="page-header">
+            Batch Upload for {{ assignment.name }} <small>(experimental)</small>
+        </h3>
+
+          <div id="error-messages"></div>
+
+          <div class="modal fade" id="modal-progress" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h4 class="modal-title">Uploading...</h4>
+                </div>
+                <div class="modal-body">
+                  <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h5><small>
+            Please upload one ".zip" file per user with the name "&lt;username&gt;.zip"
+            <br/>
+            These zip files should contain as many ".pdf" or ".txt" files as the number of questions on the assignment
+            with the names "&lt;q#&gt;.pdf/txt".
+          </small></h5>
+
+
+          <div class="well text-muted text-center" style="padding-top: 4rem; padding-bottom: 4rem;">
+            <span class="glyphicon glyphicon-arrow-down" style="font-size: 4rem;"></span>
+            <h3>Drop Zip Files Here to Upload</h3>
+          </div>
+          
+          <input id="fileupload" type="file" name="submission_zip" multiple
+                 style="display: none;"
+                 data-url="{{ request.path }}"
+                 data-form-data='{"csrfmiddlewaretoken": "{{ csrf_token }}"}'>
+          
+          <table id="gallery" class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Submissions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sub in submissions %}
+                <tr>
+                  <td><a href="{% url 'assignment:submission_view' sub.id %}">
+                    {{ sub.author.user.username }}
+                  </a></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </form>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+

@@ -1,0 +1,56 @@
+
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <!-- TODO: add reviewer and reviewee info based on permissions (ta, ...) -->
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <!-- <h2>The submission:</h2> -->
+            <div>
+                {% if is_staff or is_author %}
+                    <h3>Here is the result of your calibration review:</h3>
+                    <!-- <div>Grader: {{ review.grader.user.first_name }} {{ review.grader.user.last_name }}</div> -->
+                {% endif %}
+                {% load submission_view %}
+                
+                <!-- Everything happens here: -->
+                {% submission_view_extra request.user review.submission components 'calibration-view-rubric-answers.html' %}
+                
+                <!-- Our updated realistic estimate of your dependability score is <span style="color: blue">  (will appear soon)  </span> </br>
+                Our updated pessimistic estimate of your dependability score is <span style="color: blue">  (will appear soon)  </span> -->
+                {% if is_flagged %}
+                <span style="color: blue"> Our back-of-the-envelope calculation shows that it is very likely that this calibration would decrease your dependability score.
+                    Therefore, we will not count it as part of your main dependability calculation. </span>
+                {% endif %}
+            <!--
+                Your accuracy percentage in this calibration review: {{ points}}
+                {% if is_staff or is_author %}
+                    {% if review.nopublicuse %}
+                        <div>I do NOT want my review submission to be used anonymously in public.</div>
+                    {% else %}
+                        <div>I am fine with my review submission to be used anonymously in public.</div>
+                    {% endif %}
+                {% endif %}
+            -->
+                
+            
+
+              <!--  {% if is_author %}
+                    <div class="form-group">
+                        <a class="btn btn-primary" style="margin-top: 15px"
+                            href="{% url 'review:review_edit' review.id %}">
+                            Edit
+                        </a>
+                    </div>
+                {% endif %} 
+                -->
+                <br/>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

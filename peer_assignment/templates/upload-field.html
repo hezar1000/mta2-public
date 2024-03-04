@@ -1,0 +1,32 @@
+    <div id="file_input_{{ name }}"></div>
+    
+    <script type="text/javascript">
+        Formio.createForm(document.getElementById('file_input_{{ name }}'), {
+            components:
+                [
+                    {
+                        input: true,
+                        type: 'file',
+                        noupload: true,
+                        label: '{{ label }}',
+                        realName: true,
+                        tooltip: '{{ tooltip }}',
+                        key: '{{ name }}',
+                        filePattern: '*.pdf',
+                        storage: 'test',
+                        multiple: false,
+                        validate: {required: true},
+                    },
+                ]
+        }).then(function(formio) {
+            {% if has_file %}
+                formio.submission = {
+                    data: {
+                        '{{ name }}': [
+                            {name: '{{ file.url }}', size: '{{ file.size }}', in_server: true},
+                        ],
+                    },
+                };
+            {% endif %}
+        })
+    </script>

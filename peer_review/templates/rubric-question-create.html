@@ -1,0 +1,129 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<script type="text/html" id="form-template">
+  <div id="item-__prefix__">
+
+    <h3>Choice #__prefixp1__</h3>
+
+    {% for field in mcitem_formset.empty_form.visible_fields %}
+      <div class="form-group row">
+          <div class="col-md-2 col-form-label">
+              {{ field.label_tag }} 
+          </div>
+          <div class="col-md-3">
+              {{ field }}
+          </div>
+          <div class="col-md-6">
+            {{ field.help_text }}
+          </div>
+      </div>
+    {% endfor %}
+
+  </div>
+</script>
+
+<script>
+$(document).ready(function() {
+    // $('#id_category').change(function(ev) {
+    //   var selected = $(this).val()
+    //   if (selected == "NONE") {
+    //     $('#formset-container').hide()
+    //     $('#div_button').hide()
+    //   } else if (selected == 'MULT') {
+    //     $('#formset-container').show()
+    //     $('#div_button').show()
+    //   } else if (selected == "TEXT") {
+    //     $('#formset-container').hide()
+    //     $('#div_button').hide()
+    //   }
+    // });
+
+    $('.remove-item').click(function(ev) {
+      ev.preventDefault();
+      // TODO: don't know if we need it or not, if we do, we should fix this first
+      var container = $('#formset-container')[0];
+      container.removeChild(container.children[container.children.length-1]);
+    });
+
+    function addItem(animate) {
+        var count = $('#formset-container').children().length;
+        var tmplMarkup = $('#form-template').html();
+        var compiledTmpl = tmplMarkup.replace(/__prefix__/g, count);
+        compiledTmpl = compiledTmpl.replace(/__prefixp1__/g, count+1);
+        compiledTmpl = compiledTmpl.replace(/value="0"/g, 'value="'+count+'"');
+        $('div#formset-container').append(compiledTmpl);
+
+        // update form count
+        $('#id_choices-TOTAL_FORMS').attr('value', count+1);
+
+        // some animate to scroll to view our new form
+        if( animate ) {
+          $('html, body').animate({
+              scrollTop: $("#add-item-button").position().top-200
+            }, 800);
+        }
+    }
+
+    $('.add-item').click(function(ev) {
+        ev.preventDefault();
+        addItem(true);
+    });
+
+    {% for form in mcitem_formset %}
+      addItem(false);
+    {% endfor %}
+});
+</script>
+
+{% if not is_popup %}
+  <a class="btn btn-secondary" href="/review/list/">Return to the list of reviews</a>
+{% endif %}
+
+<div class="container-fluid">
+
+  <div class="page-header">
+    <h2>Create a rubric question</h2>
+  </div>
+
+    <form method="post" action="/review/rubric/question/create/">
+      {% csrf_token %}
+      {% if is_popup %}
+        <input name="popup" type="hidden" value="1" />
+      {% endif %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-warning">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      {% for field in form %}
+          <div class="form-group row">
+              <div class="col-md-2 col-form-label">
+                  {{ field.label_tag }} 
+              </div>
+              <div class="col-md-3">
+                  {{ field }}
+              </div>
+              <div class="col-md-6">
+                {{ field.help_text }}
+              </div>
+          </div>
+      {% endfor %}
+
+      {{ mcitem_formset.management_form }}
+      
+      <div id="formset-container" class="panel panel-default panel-body"></div>
+
+      <div id="div_button" style="margin-bottom:20px;">
+        <a href="#" id="add-item-button" class="btn btn-info add-item" >Add a choice</a>
+        <!-- <a href="#" id="remove-item-button" class="btn btn-danger remove-item" >Remove the last choice</a> -->
+      </div>
+
+      <button type="submit" class="btn btn-primary">Save this rubric question</button>
+    </form>
+
+</div>
+{% endblock %}

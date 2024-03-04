@@ -1,0 +1,30 @@
+{% if file_not_found %}
+    <div class="alert alert-warning">
+        Could not find the submitted file, please contact staff.
+    </div>
+{% elif cant_read %}
+    <div class="alert alert-warning">
+        Could not read file, please contact staff.
+    </div>
+{% else %}
+    <{{ tag }}>{{ header }}
+    <a href="{{ url }}" download>
+        <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
+    </a>
+    </{{ tag }}>
+
+    {% if is_pdf %}
+        <object data="{{ url }}" type="application/pdf" width="100%" height="500">
+            <embed src="{{ url }}" type="application/pdf">
+                Your browser does not support embedded PDF files, you can download the file using the link above.
+            </embed>
+        </object>
+    {% elif display_code %}
+        <pre><code class="language-{{ language }}">{{ content }}</code></pre>
+    {% else %}
+        <div class="alert alert-warning">
+            File type not supported.
+            <a href="{{ url }}" download>(Download submitted file from here)</a>
+        </div>
+    {% endif %}
+{% endif %}

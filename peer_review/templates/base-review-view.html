@@ -1,0 +1,55 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <!-- TODO: add reviewer and reviewee info based on permissions (ta, ...) -->
+    <div class="row">
+        <div class="col-md-2">{% block side_left %}{% endblock %}</div>
+        <div class="col-md-8">
+            {% block header %}{% endblock %}
+
+            <!-- <h2>The submission:</h2> -->
+            <div>
+                {% if is_staff or is_author %}
+                    {% if is_staff %}
+                    <!--  <div>Grader: {{ model.grader.user.first_name }} {{ model.grader.user.last_name }}</div> -->
+                        <div>Grader: <a href="/course/{{model.grader.course.id}}/{{model.grader.user.id}}/" target="">{{ model.grader.user.first_name }} {{ model.grader.user.last_name }}</a></div>
+                        <div>Submission author: <a href="/course/{{model.grader.course.id}}/{{model.submission.author.user.id}}/" target="">{{ model.submission.author.user.first_name }} {{ model.submission.author.user.last_name }}</a></div>
+                     
+                        {% else %}
+                        <div>Grader: {{ model.grader.user.first_name }} {{ model.grader.user.last_name }} </div>
+                    {% endif %}
+                {% endif %}
+
+                
+                <!-- Everything happens here: -->
+                {% block submission_main %}{% endblock %}
+
+<!--                 
+                {% if is_staff or is_author %}
+                    {% if model.nopublicuse %}
+                        <div>I do NOT want my {{ model_name }} submission to be used anonymously in public.</div>
+                    {% else %}
+                        <div>I am fine with my {{ model_name }} submission to be used anonymously in public.</div>
+                    {% endif %}
+                {% endif %} -->
+                
+
+                {% if is_author %}
+                    <div class="form-group">
+                        <a class="btn btn-primary" style="margin-top: 15px"
+                            href="{% url edit_link model.id %}">
+                            Edit
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% block footer %}{% endblock %}
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

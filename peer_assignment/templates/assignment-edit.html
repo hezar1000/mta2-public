@@ -1,0 +1,63 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-md-10 col-md-offset-2">
+      <h3 class="page-header">Edit the assignment</h3>
+
+      <form method="post" action="/assignment/{{ tid }}/edit/" enctype="multipart/form-data">
+        
+        {% csrf_token %}
+        {% load filename %}
+
+        <input type="hidden" name="courseid" value="{{ cid }}" />
+
+        {% for field in fields %}
+            <div class="form-group row">
+              <div class="col-md-4 col-form-label">
+                  {{ field.label_tag }} 
+              </div>
+              <div class="col-md-4">
+                  {{ field }}
+              </div>
+            </div>
+        {% endfor %}
+
+        <div class="form-group row">
+          <label for="id_filefield" class="col-md-4 col-form-label">
+              Current files:
+          </label>
+          <div class="col-md-4">
+            {% for field in files %}
+              {% if field.file %}
+              <a href="/media/{{ field }}/" class="col-md-4 col-form-label">
+                {{ field.file|filename }}
+              </a>
+              {% else %}
+              <div class="col-md-4">
+                        Field not found
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="id_filefield" class="col-md-4 col-form-label">Replace all of the current files with these files: </label>
+            <div class="col-md-4">
+                <input id="id_filefield" class="form-control" type="file" name="files" multiple>
+            </div>
+        </div>
+
+        <input class="btn btn-primary" type="submit" value="Save" />
+      </form>
+    
+      <br />
+      <a class="btn btn-default" href="/assignment/{{ tid }}/view/">Return to the details of assignment</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

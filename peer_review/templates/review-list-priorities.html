@@ -1,0 +1,80 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+{% if 'course_id' in request.session %}
+
+{% load get_pending_reviews %}
+{% load has_review %}
+{% load get_ta_reviews %}
+{% load get_student_reviews %}
+{% load get_ta_evaluations %}
+{% load get_assignment_submissions%}
+
+<div class="container-fluid">
+  
+  <div class="row">
+    <div class="col-sm-6 col-md-offset-2 col-md-8">
+      <h3>Overview</h3>
+      <div class="panel panel-default"> 
+        <table class="table table-striped table-bordered"> 
+          
+          <thead> 
+            <tr> 
+              <th class="col-md-3">Priority</th>
+              <th class="col-md-3"># Assignments</th>
+            </tr> 
+          </thead>
+
+          <tbody> 
+            {% for item in priorities|dictsort:"priority" %}
+              <tr>
+                <td> {{ item.priority }} </td>
+                <td> {{ item.count }} </td>
+              </tr>
+              <div>
+            {% endfor %}
+          </tbody> 
+        </table>
+      </div>
+
+      <h3>Sample Assignments (max 10 per priority) </h3>
+      {% for item in priorities|dictsort:"priority" %}
+        <div class="panel panel-default">
+          <h4>Priority {{ item.priority }}: {{ item.count }} assignments</h4>
+          <table class="table table-bordered">
+            <tr>
+              <th class="col-md-3">Submission</th>
+              <th class="col-md-3">Grade</th>
+            </tr>
+            {% for submission in item.submissions %}
+              <tr>
+                <td>
+                  <a href="/assignment/submission/{{ submission.id }}/view/" target="_blank">
+                    {{ submission.author.user.first_name }} {{ submission.author.user.last_name }}
+                  </a>
+                  ({{ submission.assignment.name }})
+                </td>
+                <td>
+                  {{ submission.final_grade }}
+                </td>
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
+      {% endfor %}
+
+    </div>
+  </div>
+
+</div>
+
+{% else %}
+
+<div class="container-fluid">
+  <h3>Please choose a course to browse spotchecking priorities.</h3>
+</div>
+
+{% endif %}
+
+{% endblock %}

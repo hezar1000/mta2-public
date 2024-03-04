@@ -1,0 +1,73 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+  <div class="row">
+      <div class="col-sm-6 col-md-offset-1 col-md-10">
+  
+        <div class="page-header mta-header-with-btn" style="margin-top:0">
+          <h2>Rubric Questions</h2>
+  
+          <div class="btn-group mta-btn-group-title">
+              <a class="btn btn-success" href="{% url 'review:rubric_question_create' %}">
+                <span class="glyphicon glyphicon-plus"></span> Question
+              </a>
+          </div>
+        </div>
+
+      <div style="margin-top:20px;">
+
+        <table class="table table-striped table-bordered"> 
+          <thead>
+            <tr>
+              <th class="col-md-2">Title</th>
+              <th class="col-md-8">Question</th>
+              <th class="col-md-2">Options</th> 
+            </tr> 
+          </thead> 
+
+          <tbody> 
+            {% for question in questions %}
+
+              <tr class="mathjax">
+                <td>{{ question.title }}</td>   
+                <td>
+                  <div>
+                    {{ question.text }}
+                  </div>
+
+                  <ul>
+                    {% for mcitem in question.choices.all %}
+                      <li>{{ mcitem.marks }} : {{ mcitem.text }}</li>
+                    {% endfor %}
+                  </ul>
+                </td>
+                <td>
+                  <a class="btn btn-primary" href="{% url 'review:rubric_question_edit' question.id %}"
+                    data-toggle="tooltip" title="Edit">
+                    <span class="glyphicon glyphicon-pencil"></span>
+                  </a>
+                  {% if question.safe_to_remove %}
+                    <a href="{% url 'review:rubric_question_delete' question.id %}"
+                      class="btn btn-danger" data-toggle="confirmation">
+                      <span class="glyphicon glyphicon-trash"></span>
+                    </a>
+                  {% endif %}
+                </td>
+
+
+              </tr>
+
+            {% endfor %}
+          </tbody> 
+
+        </table>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

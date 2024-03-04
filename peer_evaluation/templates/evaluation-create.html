@@ -1,0 +1,6 @@
+{% extends "base-review-create.html" %}
+{% load submission_view %}
+
+{% block submission_main %}
+    {% submission_view_form_extra request.user model.review.submission form.visible_fields components 'review-view-rubric-answers.html' %}
+{% endblock %}

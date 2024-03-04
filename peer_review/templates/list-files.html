@@ -1,0 +1,5 @@
+{% for file_obj in files %}
+    <div>
+        <a href="{{ file_obj.attachment.url }}" download>{{ file_obj.attachment.name }}</a>
+    </div>
+{% endfor %}
